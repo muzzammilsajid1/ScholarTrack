@@ -1,0 +1,12 @@
+# ScholarTrack — Python dependencies
+#
+# Install with:  pip install -r requirements.txt
+#
+# Standard-library modules (sqlite3, tkinter, hashlib, threading, os, re, abc)
+# are built into Python and do NOT appear here.
+
+# AI feedback feature (Student view → "Get AI Feedback" button)
+google-genai
+
+# Loads GEMINI_API_KEY from the .env file at startup
+python-dotenv
