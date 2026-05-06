@@ -1,0 +1,51 @@
+[
+  {
+    "name": "Taha Amjad",
+    "username": "taha_a",
+    "password": "9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c",
+    "role": "student",
+    "id": 1
+  },
+  {
+    "name": "Ibrahim Hafeez",
+    "username": "ibrahim_h",
+    "password": "9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c",
+    "role": "student",
+    "id": 2
+  },
+  {
+    "name": "Huzaifa Khan",
+    "username": "huzaifa_k",
+    "password": "9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c",
+    "role": "student",
+    "id": 3
+  },
+  {
+    "name": "Mohsin Shah",
+    "username": "mohsin_s",
+    "password": "9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c",
+    "role": "teacher",
+    "id": 4
+  },
+  {
+    "name": "Anwar Abbas",
+    "username": "anwar_a",
+    "password": "9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c",
+    "role": "teacher",
+    "id": 5
+  },
+  {
+    "name": "Admin User",
+    "username": "admin",
+    "password": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+    "role": "admin",
+    "id": 6
+  },
+  {
+    "id": 7,
+    "name": "Test Student",
+    "username": "test_s",
+    "password": "9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c",
+    "role": "student"
+  }
+]

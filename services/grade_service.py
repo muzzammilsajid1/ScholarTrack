@@ -1,59 +1,22 @@
-"""
-Service for grade calculations and analytics.
-"""
-from models.exceptions import InvalidGradeError
-from database.db_manager import DatabaseManager
+# Service for grade calculations and analytics.
+from storage.file_manager import FileManager
 
 class GradeService:
-    """Provides business logic for grades, GPA calculations, and class statistics.
-    
-    This class demonstrates encapsulation by isolating business logic from direct database operations.
-    """
-    def __init__(self, db: DatabaseManager):
-        """Initializes the service with a database connection.
-        
-        Args:
-            db (DatabaseManager): The active database connection manager.
-        """
+    def __init__(self, db):
         self.db = db
 
-    @staticmethod
-    def letter_grade(score: float) -> str:
-        """Converts a numerical score into a standard letter grade.
-        
-        Args:
-            score (float): The numerical score out of 100.
-            
-        Returns:
-            str: The corresponding letter grade from A to F.
-            
-        Raises:
-            InvalidGradeError: If the score falls outside the 0 to 100 range.
-        """
+    def letter_grade(self, score):
         if not (0 <= score <= 100):
-            raise InvalidGradeError(f"Score {score} is out of range. Must be between 0 and 100 inclusive.")
+            print(f"Error: Score {score} is out of range. Must be between 0 and 100 inclusive.")
+            return None
             
-        if score >= 90:
-            return 'A'
-        elif score >= 80:
-            return 'B'
-        elif score >= 70:
-            return 'C'
-        elif score >= 60:
-            return 'D'
-        else:
-            return 'F'
+        if score >= 90: return 'A'
+        elif score >= 80: return 'B'
+        elif score >= 70: return 'C'
+        elif score >= 60: return 'D'
+        else: return 'F'
 
-    @staticmethod
-    def calculate_gpa(scores: list) -> float:
-        """Calculates a cumulative Grade Point Average from numerical scores.
-        
-        Args:
-            scores (list): A list of numerical scores.
-            
-        Returns:
-            float: The computed cumulative GPA rounded to two decimals.
-        """
+    def calculate_gpa(self, scores):
         if not scores:
             return 0.0
             
@@ -61,82 +24,52 @@ class GradeService:
         
         total_points = 0.0
         for score in scores:
-            letter = GradeService.letter_grade(score)
+            letter = self.letter_grade(score)
             total_points += gpa_scale_map[letter]
             
         return round(total_points / len(scores), 2)
 
-    @staticmethod
-    def is_at_risk(gpa: float, threshold: float = 2.0) -> bool:
-        """Identifies if a student is at risk based on their cumulative GPA.
-        
-        Args:
-            gpa (float): The user's current GPA.
-            threshold (float, optional): The warning threshold. Defaults to 2.0.
-            
-        Returns:
-            bool: True if the GPA is below the threshold, otherwise False.
-        """
+    def is_at_risk(self, gpa, threshold=2.0):
         return gpa < threshold
 
-    def get_class_average(self, subject_id: int) -> float:
-        """Calculates the average numerical score for a specific subject.
-        
-        Args:
-            subject_id (int): The unique ID of the target subject.
-            
-        Returns:
-            float: The class average score, rounded to two decimals.
-        """
-        query = "SELECT score FROM grades WHERE subject_id = ?"
-        rows = self.db._fetch_all(query, (subject_id,))
-        scores = [row[0] for row in rows if row[0] is not None]
-        
+    def get_class_average(self, subject_id):
+        enrolled = self.db.get_students_in_subject(subject_id)
+        scores = []
+        for student in enrolled:
+            student_id = student[0]
+            grades = self.db.get_student_grades(student_id)
+            subject_info = {s[0]: s for s in self.db.get_subjects_for_student(student_id)}
+            for g in grades:
+                if len(g) < 4 or g[3] is None:
+                    continue
+                for s_id, subj in subject_info.items():
+                    if s_id == subject_id and g[2] == subj[2]:
+                        scores.append(g[3])
+                        break
+
         if not scores:
             return 0.0
-            
         return round(sum(scores) / len(scores), 2)
 
-    def get_top_students(self, n: int = 5) -> list:
-        """Retrieves the top performing students mapped by average score.
-        
-        Args:
-            n (int, optional): The number of top students to return. Defaults to 5.
-            
-        Returns:
-            list: A ranked array of student record dictionaries.
-        """
-        query = '''
-            SELECT u.name, u.username, s.department, AVG(g.score) as avg_score
-            FROM students s
-            JOIN users u ON s.user_id = u.id
-            JOIN grades g ON g.student_id = s.id
-            GROUP BY s.id
-            ORDER BY avg_score DESC
-            LIMIT ?
-        '''
-        rows = self.db._fetch_all(query, (n,))
-        
-        return [
-            {
-                "name": row[0],
-                "username": row[1],
-                "department": row[2],
-                "average_score": round(row[3], 2) if row[3] else 0.0
-            }
-            for row in rows
-        ]
+    def get_top_students(self, n=5):
+        all_students = self.db.get_all_students()
+        ranked = []
+        for student in all_students:
+            student_id = student[0]
+            grades = self.db.get_student_grades(student_id)
+            scores = [g[3] for g in grades if len(g) >= 4 and g[3] is not None]
+            avg = round(sum(scores) / len(scores), 2) if scores else 0.0
+            ranked.append({
+                "name": student[1],
+                "username": student[2],
+                "department": student[4],
+                "average_score": avg,
+            })
 
-    @staticmethod
-    def get_grade_summary(grades: list) -> dict:
-        """Computes a statistical summary of a student's grade records.
-        
-        Args:
-            grades (list): A list of grade tuples representing database records.
-            
-        Returns:
-            dict: An aggregated summary containing highest, lowest, average scores, counts, and performance label.
-        """
+        ranked.sort(key=lambda x: x["average_score"], reverse=True)
+        return ranked[:n]
+
+    def get_grade_summary(self, grades):
         if not grades:
             return {
                 "highest_score": 0.0,
@@ -165,18 +98,14 @@ class GradeService:
         lowest = min(valid_scores)
         avg = round(sum(valid_scores) / len(valid_scores), 2)
         total = len(valid_scores)
-        passed = sum(1 for s in valid_scores if GradeService.letter_grade(s) != 'F')
+        passed = sum(1 for s in valid_scores if self.letter_grade(s) != 'F')
         failed = total - passed
         
-        gpa = GradeService.calculate_gpa(valid_scores)
-        if gpa >= 3.5:
-            label = "Excellent"
-        elif gpa >= 3.0:
-            label = "Good"
-        elif gpa >= 2.0:
-            label = "Average"
-        else:
-            label = "Poor"
+        gpa = self.calculate_gpa(valid_scores)
+        if gpa >= 3.5: label = "Excellent"
+        elif gpa >= 3.0: label = "Good"
+        elif gpa >= 2.0: label = "Average"
+        else: label = "Poor"
             
         return {
             "highest_score": highest,
@@ -188,16 +117,8 @@ class GradeService:
             "performance_label": label
         }
 
-    @staticmethod
-    def get_subject_ranking(grades: list) -> list:
-        """Sorts a list of grade records into a ranking from highest to lowest score.
-        
-        Args:
-            grades (list): A list of grade tuples from the database.
-            
-        Returns:
-            list: A sorted list of (subject_name, score, letter) tuples.
-        """
+    def get_subject_ranking(self, grades):
         valid_grades = [g for g in grades if len(g) > 4 and g[3] is not None]
         sorted_grades = sorted(valid_grades, key=lambda x: x[3], reverse=True)
         return [(g[1], g[3], g[4]) for g in sorted_grades]
+

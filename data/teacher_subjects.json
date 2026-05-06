@@ -1,0 +1,18 @@
+[
+  {
+    "teacher_id": 4,
+    "subject_id": 1
+  },
+  {
+    "teacher_id": 4,
+    "subject_id": 2
+  },
+  {
+    "teacher_id": 5,
+    "subject_id": 3
+  },
+  {
+    "teacher_id": 5,
+    "subject_id": 4
+  }
+]

@@ -8,20 +8,17 @@
 #   It is retained to demonstrate the OOP concepts
 #   of encapsulation and abstraction via a sidebar-
 #   navigation pattern.
-# Key classes used: Dashboard, User, DatabaseManager
+# Key classes used, User, DatabaseManager
 # OOP concepts demonstrated: Encapsulation (view
 #   switching hidden behind clear_main_container),
 #   Abstraction (User base class used for display)
 # -----------------------------------------------
-"""
-Legacy dashboard shell — NOT used in the current application flow.
-Retained for reference to demonstrate OOP sidebar-navigation patterns.
-"""
+# Legacy dashboard shell — NOT used in the current application flow.
 import tkinter as tk
 from tkinter import ttk
 
 from gui.theme import THEME
-from database.db_manager import DatabaseManager
+from storage.file_manager import FileManager
 from models.user import User
 
 BG_DARK = THEME["COLOR_BG_DARK"]
@@ -31,18 +28,9 @@ ACCENT  = "#4a9eff"
 
 
 class Dashboard:
-    """Handles the main application dashboard layout and routing.
-
-    This class demonstrates encapsulation by managing its UI elements and dynamically
-    swapping view contexts within a central container.
-    """
-    def __init__(self, user: User, db: DatabaseManager):
-        """Initializes the dashboard interface for the logged-in user.
-
-        Args:
-            user (User): The authenticated user instance.
-            db (DatabaseManager): The active database connection manager.
-        """
+    # Handles the main application dashboard layout and routing.
+    def __init__(self, user, db):
+        # Initializes the dashboard interface for the logged-in user.
         self.user = user
         self.db   = db
 
@@ -77,7 +65,7 @@ class Dashboard:
         btn_logout.place(relx=0.98, rely=0.02, anchor="ne")
 
     def build_sidebar(self):
-        """Constructs the sidebar navigation menu."""
+        # Constructs the sidebar navigation menu.
         self.sidebar_frame = tk.Frame(self.window, width=220, bg=BG_CARD)
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
         self.sidebar_frame.grid_rowconfigure(7, weight=1)
@@ -145,7 +133,7 @@ class Dashboard:
         btn_logout.grid(row=9, column=0, padx=THEME["PADDING_MEDIUM"], pady=THEME["PADDING_MEDIUM"])
 
     def build_main_container(self):
-        """Creates the main container for rendering dynamic views."""
+        # Creates the main container for rendering dynamic views.
         self.main_container = tk.Frame(
             self.window,
             bg=BG_CARD,
@@ -159,12 +147,12 @@ class Dashboard:
         self.main_container.grid_columnconfigure(0, weight=1)
 
     def clear_main_container(self):
-        """Purges all active child widgets in the main container."""
+        # Purges all active child widgets in the main container.
         for widget in self.main_container.winfo_children():
             widget.destroy()
 
     def show_home_view(self):
-        """Displays the home dashboard screen."""
+        # Displays the home dashboard screen.
         self.clear_main_container()
         frame = tk.Frame(self.main_container, bg=BG_CARD)
         frame.grid(row=0, column=0, sticky="nsew")
@@ -178,7 +166,7 @@ class Dashboard:
         )
 
     def show_student_view(self):
-        """Displays the student management view."""
+        # Displays the student management view.
         self.clear_main_container()
         frame = tk.Frame(self.main_container, bg=BG_CARD)
         frame.grid(row=0, column=0, sticky="nsew")
@@ -191,7 +179,7 @@ class Dashboard:
         )
 
     def show_grade_view(self):
-        """Displays the grades management view."""
+        # Displays the grades management view.
         self.clear_main_container()
         frame = tk.Frame(self.main_container, bg=BG_CARD)
         frame.grid(row=0, column=0, sticky="nsew")
@@ -204,7 +192,7 @@ class Dashboard:
         )
 
     def show_report_view(self):
-        """Displays the system analytics view."""
+        # Displays the system analytics view.
         self.clear_main_container()
         frame = tk.Frame(self.main_container, bg=BG_CARD)
         frame.grid(row=0, column=0, sticky="nsew")
@@ -217,7 +205,7 @@ class Dashboard:
         )
 
     def show_settings_view(self):
-        """Displays the account configuration view."""
+        # Displays the account configuration view.
         self.clear_main_container()
         frame = tk.Frame(self.main_container, bg=BG_CARD)
         frame.grid(row=0, column=0, sticky="nsew")
@@ -230,7 +218,7 @@ class Dashboard:
         )
 
     def logout(self):
-        """Terminates the current session and returns to login."""
+        # Terminates the current session and returns to login.
         self.user = None
         self.window.destroy()
 
@@ -239,5 +227,5 @@ class Dashboard:
         app.render()
 
     def render(self):
-        """Mounts and renders the dashboard UI loop."""
+        # Mounts and renders the dashboard UI loop.
         self.window.mainloop()

@@ -9,17 +9,14 @@
 #   extends User), Abstraction (GradeService hides
 #   GPA calculation logic)
 # -----------------------------------------------
-"""
-Student view — standard Tkinter only.
-
-Layout:
-  Header (create_header)
-  Info bar — dept, semester, GPA badge
-  ttk.Notebook with two tabs:
-    • Grades      — Treeview: Subject | Code | Score | Grade
-    • Attendance  — summary label + Treeview: Subject | Date | Status
-  AI Feedback panel — button + read-only Text widget
-"""
+# Student view — standard Tkinter only.
+# Layout:
+#   Header (create_header)
+#   Info bar — dept, semester, GPA badge
+#   ttk.Notebook with two tabs:
+#     • Grades      — Treeview: Subject | Code | Score | Grade
+#     • Attendance  — summary label + Treeview: Subject | Date | Status
+#   AI Feedback panel — button + read-only Text widget
 import os
 import threading
 import tkinter as tk
@@ -29,7 +26,7 @@ from gui.theme import THEME
 from gui.components import create_header
 from gui.dialogs import show_success, show_error
 from models.student import Student
-from database.db_manager import DatabaseManager
+from storage.file_manager import FileManager
 from services.grade_service import GradeService
 
 BG   = THEME["COLOR_BG_DARK"]
@@ -39,7 +36,7 @@ ACC  = "#4a9eff"
 
 
 class StudentView:
-    def __init__(self, student: Student, db: DatabaseManager):
+    def __init__(self, student, db):
         self.student       = student
         self.db            = db
         self.grade_service = GradeService(self.db)
@@ -60,7 +57,7 @@ class StudentView:
     # ── Data ──────────────────────────────────────────────────────
 
     def _load_data(self):
-        """Fetch enrolled subjects, grades, GPA, and attendance from the database."""
+        # Fetch enrolled subjects, grades, GPA, and attendance from the database.
         # Load only subjects this student is enrolled in.
         self.enrolled_subjects = self.db.get_subjects_for_student(self.student.id)
         # Keep a set of enrolled subject codes for fast filtering (code = g[2] in grade rows).
@@ -81,7 +78,7 @@ class StudentView:
     # ── Shared style ──────────────────────────────────────────────
 
     def _apply_styles(self):
-        """Configure a single dark ttk.Treeview style used in all tabs."""
+        # Configure a single dark ttk.Treeview style used in all tabs.
         s = ttk.Style()
         s.theme_use("clam")
         s.configure("S.Treeview",
@@ -102,13 +99,13 @@ class StudentView:
     # ── UI construction ───────────────────────────────────────────
 
     def _build_ui(self):
-        """Assemble: header → info bar → notebook tabs → AI panel."""
+        # Assemble: header → info bar → notebook tabs → AI panel.
         create_header(self.window, self.student.name, "Student", self._logout)
         self._build_info_bar()
         self._build_notebook()
 
     def _build_info_bar(self):
-        """Thin strip showing department, semester, and colour-coded GPA."""
+        # Thin strip showing department, semester, and colour-coded GPA.
         bar = tk.Frame(self.window, bg=CARD, height=48)
         bar.pack(fill="x", padx=15, pady=(10, 0))
         bar.pack_propagate(False)
@@ -140,7 +137,7 @@ class StudentView:
                  fg=gpa_color).pack(side="right", padx=(5, 10))
 
     def _build_notebook(self):
-        """Create the ttk.Notebook containing Grades and Attendance tabs."""
+        # Create the ttk.Notebook containing Grades and Attendance tabs.
         nb = ttk.Notebook(self.window)
         nb.pack(fill="both", expand=True, padx=15, pady=10)
 
@@ -155,7 +152,7 @@ class StudentView:
     # ── Grades tab ────────────────────────────────────────────────
 
     def _build_grades_tab(self, parent):
-        """Treeview listing Subject | Code | Score | Grade."""
+        # Treeview listing Subject | Code | Score | Grade.
         cols = ("Subject", "Code", "Score", "Grade")
         self.grade_tree = ttk.Treeview(parent, columns=cols,
                                        show="headings", style="S.Treeview", height=12)
@@ -172,7 +169,7 @@ class StudentView:
         self._populate_grades()
 
     def _populate_grades(self):
-        """Insert one row per enrolled-subject grade record into the grades Treeview."""
+        # Insert one row per enrolled-subject grade record into the grades Treeview.
         self.grade_tree.delete(*self.grade_tree.get_children())
         if not self.student.grades:
             self.grade_tree.insert("", "end", values=("No grades on record.", "", "", ""))
@@ -185,7 +182,7 @@ class StudentView:
     # ── Attendance tab ────────────────────────────────────────────
 
     def _build_attendance_tab(self, parent):
-        """Summary label + Treeview listing Subject | Date | Status."""
+        # Summary label + Treeview listing Subject | Date | Status.
         # Summary bar
         s = self.attendance_summary
         summary_text = (f"Attendance: {s['present']}/{s['total']} classes  "
@@ -224,7 +221,7 @@ class StudentView:
     # ── AI Feedback panel ─────────────────────────────────────────
 
     def _get_ai_feedback(self):
-        """Open a popup window and fetch AI feedback."""
+        # Open a popup window and fetch AI feedback.
         self.btn_ai.configure(state="disabled")
 
         popup = tk.Toplevel(self.window)
@@ -309,11 +306,11 @@ class StudentView:
     # ── Navigation ────────────────────────────────────────────────
 
     def _logout(self):
-        """Destroy window and return to login screen."""
+        # Destroy window and return to login screen.
         self.window.destroy()
         from gui.login_screen import LoginScreen
         LoginScreen(self.db).render()
 
     def render(self):
-        """Start the Tkinter event loop."""
+        # Start the Tkinter event loop.
         self.window.mainloop()

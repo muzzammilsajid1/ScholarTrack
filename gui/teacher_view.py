@@ -9,16 +9,13 @@
 #   extends User), Abstraction (GradeService.letter_grade
 #   hides grading logic)
 # -----------------------------------------------
-"""
-Teacher view — standard Tkinter only.
-
-Layout:
-  Header (create_header)
-  ttk.Notebook with two tabs:
-    • Grades     — left: student list  |  right: grade Treeview + score editor
-    • Attendance — subject combobox, date entry, per-student status dropdowns,
-                   Submit button
-"""
+# Teacher view — standard Tkinter only.
+# Layout:
+#   Header (create_header)
+#   ttk.Notebook with two tabs:
+#     • Grades     — left: student list  |  right: grade Treeview + score editor
+#     • Attendance — subject combobox, date entry, per-student status dropdowns,
+#                    Submit button
 import tkinter as tk
 from tkinter import ttk
 from datetime import date as dt_date
@@ -27,7 +24,7 @@ from gui.theme import THEME
 from gui.components import create_header
 from gui.dialogs import show_success, show_error
 from models.teacher import Teacher
-from database.db_manager import DatabaseManager
+from storage.file_manager import FileManager
 from services.grade_service import GradeService
 
 BG   = THEME["COLOR_BG_DARK"]
@@ -37,7 +34,7 @@ ACC  = "#4a9eff"
 
 
 class TeacherView:
-    def __init__(self, teacher: Teacher, db: DatabaseManager):
+    def __init__(self, teacher, db):
         self.teacher       = teacher
         self.db            = db
         self.grade_service = GradeService(self.db)
@@ -64,7 +61,7 @@ class TeacherView:
     # ── Shared style ──────────────────────────────────────────────
 
     def _apply_styles(self):
-        """Apply a single dark Treeview style and Notebook tab style."""
+        # Apply a single dark Treeview style and Notebook tab style.
         s = ttk.Style()
         s.theme_use("clam")
         s.configure("T.Treeview",
@@ -85,7 +82,7 @@ class TeacherView:
     # ── UI construction ───────────────────────────────────────────
 
     def _build_ui(self):
-        """Assemble header + Notebook, or a 'no subjects' notice if unassigned."""
+        # Assemble header + Notebook, or a 'no subjects' notice if unassigned.
         create_header(self.window, self.teacher.name, "Teacher", self._logout)
 
         # If the admin hasn't assigned any subjects yet, show a helpful message
@@ -119,12 +116,12 @@ class TeacherView:
     # ── Grades tab ────────────────────────────────────────────────
 
     def _build_grades_tab(self, parent):
-        """Two-column layout: student list on left, grade editor on right."""
+        # Two-column layout: student list on left, grade editor on right.
         self._build_student_panel(parent)
         self._build_grade_panel(parent)
 
     def _build_student_panel(self, parent):
-        """Left column: search Entry + student Treeview."""
+        # Left column: search Entry + student Treeview.
         left = tk.Frame(parent, bg=CARD, width=340)
         left.pack(side="left", fill="y", padx=(0, 10))
         left.pack_propagate(False)
@@ -159,19 +156,19 @@ class TeacherView:
         self._populate_student_tree(self.all_students)
 
     def _populate_student_tree(self, students):
-        """Fill the student Treeview; iid = students.id string."""
+        # Fill the student Treeview; iid = students.id string.
         self.student_tree.delete(*self.student_tree.get_children())
         for s in students:
             self.student_tree.insert("", "end", iid=str(s[0]), values=(s[1], s[4]))
 
     def _filter_students(self, *_):
-        """Filter student list by the search entry text."""
+        # Filter student list by the search entry text.
         q = self.search_var.get().lower()
         self._populate_student_tree(
             [s for s in self.all_students if q in s[1].lower()])
 
     def _on_student_select(self, _event):
-        """Load the selected student's grades into the right panel."""
+        # Load the selected student's grades into the right panel.
         sel = self.student_tree.selection()
         if not sel:
             return
@@ -180,7 +177,7 @@ class TeacherView:
         self._refresh_grade_panel()
 
     def _build_grade_panel(self, parent):
-        """Right column: grade Treeview + score-edit form."""
+        # Right column: grade Treeview + score-edit form.
         self.right = tk.Frame(parent, bg=BG)
         self.right.pack(side="left", fill="both", expand=True)
 
@@ -225,7 +222,7 @@ class TeacherView:
         self.status_lbl.pack(side="left", padx=5)
 
     def _refresh_grade_panel(self):
-        """Reveal and repopulate the grade Treeview for the chosen student."""
+        # Reveal and repopulate the grade Treeview for the chosen student.
         self.placeholder.pack_forget()
         self.grade_tree.pack(fill="both", expand=True, pady=(0, 5))
         self._grade_sb.pack(side="right", fill="y")
@@ -240,7 +237,7 @@ class TeacherView:
         self.status_lbl.configure(text="")
 
     def _save_selected_grade(self):
-        """Validate score entry and persist the update for the selected grade row."""
+        # Validate score entry and persist the update for the selected grade row.
         sel = self.grade_tree.selection()
         if not sel:
             self._show_status("Select a grade row first.", err=True); return
@@ -253,7 +250,7 @@ class TeacherView:
             self._show_status("Enter a number between 0 and 100.", err=True); return
 
         grade_id = int(sel[0])
-        letter   = GradeService.letter_grade(score)
+        letter   = self.grade_service.letter_grade(score)
         self.db.update_grade(grade_id, score, letter)
         self.db.log_action(self.teacher.id, "GRADE_UPDATED",
                            f"student_id={self.selected_student_id} grade_id={grade_id}")
@@ -262,7 +259,7 @@ class TeacherView:
         self._show_status("Saved successfully.", err=False)
 
     def _show_status(self, msg, err=False):
-        """Show a temporary status message in the grade edit form."""
+        # Show a temporary status message in the grade edit form.
         self.status_lbl.configure(
             text=msg, fg=THEME["COLOR_DANGER"] if err else THEME["COLOR_SUCCESS"])
         self.window.after(3000, lambda: self.status_lbl.configure(text=""))
@@ -270,7 +267,7 @@ class TeacherView:
     # ── Attendance tab ────────────────────────────────────────────
 
     def _build_attendance_tab(self, parent):
-        """Subject picker + date entry + per-student status dropdowns + Submit."""
+        # Subject picker + date entry + per-student status dropdowns + Submit.
         # ── Controls row ──
         ctrl = tk.Frame(parent, bg=CARD, height=54)
         ctrl.pack(fill="x", pady=(0, 8))
@@ -281,7 +278,7 @@ class TeacherView:
 
         # Build a mapping: display string → subject_id for reliable lookup.
         # This avoids fragile string parsing when the combobox fires.
-        self.subject_map: dict[str, int] = {
+        self.subject_map = {
             f"{s[1]} ({s[2]})": s[0] for s in self.all_subjects
         }
 
@@ -358,23 +355,21 @@ class TeacherView:
         self._att_rows_frame.pack(fill="both", expand=True)
 
         # Dict of student_id → BooleanVar (True = Present, False = Absent).
-        self.attendance_vars: dict[int, tk.BooleanVar] = {}
+        self.attendance_vars = {}
 
         # Trigger initial load so students appear immediately on tab open.
         if subject_names:
             self.load_attendance_students()
 
     def _on_subject_selected(self, event=None):
-        """Handler for <<ComboboxSelected>> — delegates to load_attendance_students."""
+        # Handler for <<ComboboxSelected>> — delegates to load_attendance_students.
         self.load_attendance_students()
 
     def load_attendance_students(self):
-        """Fetch enrolled students for the selected subject and render Checkbutton rows.
-
-        Called on <<ComboboxSelected>> and once on tab build so the list
-        appears immediately. Each student gets a BooleanVar defaulting to
-        True (Present). Teacher unchecks absent students before submitting.
-        """
+        # Fetch enrolled students for the selected subject and render Checkbutton rows.
+        # Called on <<ComboboxSelected>> and once on tab build so the list
+        # appears immediately. Each student gets a BooleanVar defaulting to
+        # True (Present). Teacher unchecks absent students before submitting.
         # Clear previous rows and stored vars.
         for widget in self._att_rows_frame.winfo_children():
             widget.destroy()
@@ -425,16 +420,14 @@ class TeacherView:
                            cursor="hand2"
                            ).pack(side="left", padx=14)
 
-    def _get_selected_subject_id(self) -> int | None:
-        """Return the subject_id for the currently selected combobox item via subject_map."""
+    def _get_selected_subject_id(self):
+        # Return the subject_id for the currently selected combobox item via subject_map.
         return self.subject_map.get(self.att_subject_var.get())
 
     def _submit_attendance(self):
-        """Save attendance for every rendered student (Present if checked, Absent if not).
-
-        Uses mark_attendance (INSERT OR REPLACE) so re-submitting the same
-        student/subject/date updates the existing record instead of duplicating it.
-        """
+        # Save attendance for every rendered student (Present if checked, Absent if not).
+        # Uses mark_attendance (INSERT OR REPLACE) so re-submitting the same
+        # student/subject/date updates the existing record instead of duplicating it.
         subject_id = self._get_selected_subject_id()
         if subject_id is None:
             self._show_att_status("Select a subject first.", err=True); return
@@ -467,7 +460,7 @@ class TeacherView:
         self._show_att_status(f"Saved for {count} student(s).", err=False)
 
     def _show_att_status(self, msg, err=False):
-        """Display a temporary status message; safe even if the window is destroyed first."""
+        # Display a temporary status message; safe even if the window is destroyed first.
         try:
             if not self.att_status_lbl.winfo_exists():
                 return
@@ -487,11 +480,11 @@ class TeacherView:
     # ── Navigation ────────────────────────────────────────────────
 
     def _logout(self):
-        """Destroy window and return to login screen."""
+        # Destroy window and return to login screen.
         self.window.destroy()
         from gui.login_screen import LoginScreen
         LoginScreen(self.db).render()
 
     def render(self):
-        """Start the Tkinter event loop."""
+        # Start the Tkinter event loop.
         self.window.mainloop()

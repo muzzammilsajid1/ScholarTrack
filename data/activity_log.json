@@ -1,0 +1,9 @@
+[
+  {
+    "id": 1,
+    "user_id": 6,
+    "action": "LOGIN",
+    "target": "admin",
+    "timestamp": "2026-05-06T15:45:18Z"
+  }
+]

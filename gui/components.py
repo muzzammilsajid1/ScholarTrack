@@ -3,8 +3,8 @@ from tkinter import ttk
 from gui.theme import THEME
 
 
-def create_header(parent, user_name: str, user_role: str, on_logout) -> tk.Frame:
-    """Creates a reusable, standardized header bar across dynamic windows."""
+def create_header(parent, user_name, user_role, on_logout):
+    # Creates a reusable, standardized header bar across dynamic windows.
     BG = "#16213E"
     header = tk.Frame(parent, height=64, bg=BG)
     header.pack(fill="x")

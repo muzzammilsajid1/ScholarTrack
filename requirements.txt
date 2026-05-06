@@ -2,7 +2,7 @@
 #
 # Install with:  pip install -r requirements.txt
 #
-# Standard-library modules (sqlite3, tkinter, hashlib, threading, os, re, abc)
+# Standard-library modules (tkinter, hashlib, json, threading, os, re, abc)
 # are built into Python and do NOT appear here.
 
 # AI feedback feature (Student view → "Get AI Feedback" button)

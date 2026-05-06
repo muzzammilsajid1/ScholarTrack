@@ -1,40 +1,18 @@
-"""
-Service for generating performance charts and reports.
-"""
+# Service for generating performance charts and reports.
 
 class ReportService:
-    """Handles visual report generation for student performance.
-    
-    This class demonstrates encapsulation by grouping related reporting behaviors.
-    """
-    @staticmethod
-    def generate_performance_chart(student_id: int, grades: list[float]):
-        """Generates a chart of a student's grades.
-        
-        Args:
-            student_id (int): The student's ID.
-            grades (list[float]): The student's numerical grades.
-            
-        Returns:
-            None: Implementation pending.
-        """
+    def __init__(self):
         pass
 
-    @staticmethod
-    def generate_text_report(student, grades: list) -> str:
-        """Generates a rich text report string for a student.
-        
-        Args:
-            student: The Student model instance.
-            grades (list): A list of grade tuples from the database.
-            
-        Returns:
-            str: A formatted multiline text string summarizing performance.
-        """
+    def generate_performance_chart(self, student_id, grades):
+        pass
+
+    def generate_text_report(self, student, grades):
         from services.grade_service import GradeService
         
-        summary = GradeService.get_grade_summary(grades)
-        ranking = GradeService.get_subject_ranking(grades)
+        gs = GradeService(None)
+        summary = gs.get_grade_summary(grades)
+        ranking = gs.get_subject_ranking(grades)
         
         gpa = student.gpa if hasattr(student, 'gpa') else 0.0
         

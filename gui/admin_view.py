@@ -3,7 +3,7 @@
 # Role:     System administrator panel — manage
 #           students, teachers, subjects, attendance
 #           records, and view the activity log.
-# Key classes used: AdminView, Admin,
+# Key classes used, Admin,
 #                   DatabaseManager, GradeService
 # OOP concepts demonstrated: Encapsulation (all DB
 #   calls in named methods), Inheritance (Admin
@@ -11,22 +11,7 @@
 #   hides all SQL), Polymorphism (_delete_selected
 #   works on any Treeview + kind string)
 # -----------------------------------------------
-"""
-Admin view — standard Tkinter only.
-
-Layout:
-  Header
-  ttk.Notebook with four tabs:
-    • Students   — Treeview (ID | Name | Username | Dept | Sem | GPA | Status)
-                  + Add / Delete buttons
-    • Teachers   — Treeview (ID | Name | Username)
-                  + Add / Delete buttons
-    • Subjects   — Treeview (ID | Name | Code) + Add / Delete
-    • Attendance — read-only Treeview of all records + Delete Selected
-    • Activity   — Treeview (Time | Action | Target)  read-only
-
-No PDF export, no charts.
-"""
+# Admin view — standard Tkinter only.
 import tkinter as tk
 from tkinter import ttk
 
@@ -34,7 +19,7 @@ from gui.theme import THEME
 from gui.components import create_header
 from gui.dialogs import show_success, show_error, show_confirm
 from models.admin import Admin
-from database.db_manager import DatabaseManager
+from storage.file_manager import FileManager
 from services.grade_service import GradeService
 
 BG   = THEME["COLOR_BG_DARK"]
@@ -44,7 +29,7 @@ ACC  = "#4a9eff"
 
 
 class AdminView:
-    def __init__(self, admin: Admin, db: DatabaseManager):
+    def __init__(self, admin, db):
         self.admin         = admin
         self.db            = db
         self.grade_service = GradeService(self.db)
@@ -63,7 +48,7 @@ class AdminView:
     # ── Shared Treeview style ─────────────────────────────────────
 
     def _apply_tree_style(self):
-        """Configure a single clam-based dark style for all Treeviews."""
+        # Configure a single clam-based dark style for all Treeviews.
         s = ttk.Style()
         s.theme_use("clam")
         s.configure("Admin.Treeview",
@@ -77,7 +62,7 @@ class AdminView:
         s.map("Admin.Treeview", background=[("selected", ACC)])
 
     def _make_treeview(self, parent, columns, widths):
-        """Create a styled Treeview with a vertical scrollbar."""
+        # Create a styled Treeview with a vertical scrollbar.
         frame = tk.Frame(parent, bg=BG)
         frame.pack(fill="both", expand=True, pady=(5, 0))
 
@@ -96,14 +81,14 @@ class AdminView:
     # ── UI construction ───────────────────────────────────────────
 
     def _build_ui(self):
-        """Assemble header + Notebook."""
+        # Assemble header + Notebook.
         self._apply_tree_style()
         create_header(self.window, self.admin.name, "Administrator", self._logout)
         self._build_stats_bar()
         self._build_notebook()
 
     def _build_stats_bar(self):
-        """Quick summary strip across the top."""
+        # Quick summary strip across the top.
         n_stu = len(self.db.get_all_students())
         n_tch = len([u for u in self.db.get_all_users() if u[3] == "teacher"])
         n_sub = len(self.db.get_all_subjects())
@@ -127,7 +112,7 @@ class AdminView:
                      bg=CARD, fg=THEME["COLOR_TEXT_MUTED"]).pack()
 
     def _build_notebook(self):
-        """Create the ttk.Notebook with Students/Teachers/Subjects/Assignments/Enrollments/Attendance/Activity tabs."""
+        # Create the ttk.Notebook with Students/Teachers/Subjects/Assignments/Enrollments/Attendance/Activity tabs.
         style = ttk.Style()
         style.configure("TNotebook",        background=BG, borderwidth=0)
         style.configure("TNotebook.Tab",    background=CARD, foreground=FG,
@@ -165,7 +150,7 @@ class AdminView:
     # ── Students tab ─────────────────────────────────────────────
 
     def _build_students_tab(self, parent):
-        """Students Treeview + Add / Delete buttons."""
+        # Students Treeview + Add / Delete buttons.
         tk.Label(parent, text="All Students",
                  font=THEME["FONT_HEADING"], bg=BG, fg=FG
                  ).pack(anchor="w", pady=(8, 2))
@@ -191,7 +176,7 @@ class AdminView:
                   ).pack(side="left")
 
     def _load_students(self):
-        """Fetch all students from DB and populate the Treeview."""
+        # Fetch all students from DB and populate the Treeview.
         self.student_tree.delete(*self.student_tree.get_children())
         for u in self.db.get_all_users():
             user_id, name, username, role, s_id, sem, dept = u
@@ -204,7 +189,7 @@ class AdminView:
                                              dept or "", sem or "", f"{gpa:.2f}", status))
 
     def _open_add_student(self):
-        """Popup form to register a new student."""
+        # Popup form to register a new student.
         popup = self._make_popup("Add New Student", 420, 480)
         main  = tk.Frame(popup, bg=BG)
         main.pack(fill="both", expand=True, padx=30, pady=20)
@@ -258,7 +243,7 @@ class AdminView:
     # ── Teachers tab ─────────────────────────────────────────────
 
     def _build_teachers_tab(self, parent):
-        """Teachers Treeview + Add / Delete buttons."""
+        # Teachers Treeview + Add / Delete buttons.
         tk.Label(parent, text="All Teachers",
                  font=THEME["FONT_HEADING"], bg=BG, fg=FG
                  ).pack(anchor="w", pady=(8, 2))
@@ -284,7 +269,7 @@ class AdminView:
                   ).pack(side="left")
 
     def _load_teachers(self):
-        """Fetch all teachers and populate the Treeview."""
+        # Fetch all teachers and populate the Treeview.
         self.teacher_tree.delete(*self.teacher_tree.get_children())
         for u in self.db.get_all_users():
             user_id, name, username, role, *_ = u
@@ -293,7 +278,7 @@ class AdminView:
                                          values=(user_id, name, username))
 
     def _open_add_teacher(self):
-        """Popup form to register a new teacher."""
+        # Popup form to register a new teacher.
         popup = self._make_popup("Add New Teacher", 420, 360)
         main  = tk.Frame(popup, bg=BG)
         main.pack(fill="both", expand=True, padx=30, pady=20)
@@ -344,7 +329,7 @@ class AdminView:
     # ── Activity tab ──────────────────────────────────────────────
 
     def _build_activity_tab(self, parent):
-        """Read-only activity log Treeview + refresh button."""
+        # Read-only activity log Treeview + refresh button.
         tk.Label(parent, text="Recent Activity",
                  font=THEME["FONT_HEADING"], bg=BG, fg=FG
                  ).pack(anchor="w", pady=(8, 2))
@@ -362,7 +347,7 @@ class AdminView:
                   ).pack(anchor="w", pady=8)
 
     def _load_activity(self):
-        """Fetch the 50 most recent log entries."""
+        # Fetch the 50 most recent log entries.
         self.activity_tree.delete(*self.activity_tree.get_children())
         logs = self.db.get_recent_activity(50)
         for action, target, ts in (logs or []):
@@ -373,7 +358,7 @@ class AdminView:
     # ── Attendance tab ─────────────────────────────────────────
 
     def _build_attendance_tab(self, parent):
-        """Read-only Treeview of all attendance records + Delete Selected button."""
+        # Read-only Treeview of all attendance records + Delete Selected button.
         tk.Label(parent, text="All Attendance Records",
                  font=THEME["FONT_HEADING"], bg=BG, fg=FG
                  ).pack(anchor="w", pady=(8, 2))
@@ -399,7 +384,7 @@ class AdminView:
                   ).pack(side="left")
 
     def _load_attendance(self):
-        """Fetch all attendance records joined with student name and subject."""
+        # Fetch all attendance records joined with student name and subject.
         self.att_tree.delete(*self.att_tree.get_children())
         try:
             rows = self.db._fetch_all(
@@ -418,7 +403,7 @@ class AdminView:
             print(f"[AdminView] _load_attendance error: {e}")
 
     def _delete_att_record(self):
-        """Delete the selected attendance row after confirmation."""
+        # Delete the selected attendance row after confirmation.
         sel = self.att_tree.selection()
         if not sel:
             show_error(self.window, "No Selection",
@@ -439,7 +424,7 @@ class AdminView:
     # ── Assignments tab ───────────────────────────────────────────
 
     def _build_assignments_tab(self, parent):
-        """Teacher–Subject assignment manager: Treeview + Assign / Remove controls."""
+        # Teacher–Subject assignment manager: Treeview + Assign / Remove controls.
         tk.Label(parent, text="Teacher–Subject Assignments",
                  font=THEME["FONT_HEADING"], bg=BG, fg=FG
                  ).pack(anchor="w", pady=(8, 2), padx=5)
@@ -495,7 +480,7 @@ class AdminView:
         self._refresh_asgn_dropdowns()
 
     def _load_assignments(self):
-        """Fetch all teacher-subject assignments and populate the Treeview."""
+        # Fetch all teacher-subject assignments and populate the Treeview.
         self.assign_tree.delete(*self.assign_tree.get_children())
         for row in self.db.get_all_assignments():
             # row: (teacher_name, subject_name, code, teacher_id, subject_id)
@@ -504,7 +489,7 @@ class AdminView:
                                     values=(row[0], row[1], row[2]))
 
     def _refresh_asgn_dropdowns(self):
-        """Rebuild teacher and subject Comboboxes from live DB data."""
+        # Rebuild teacher and subject Comboboxes from live DB data.
         teachers = [(u[0], u[1]) for u in self.db.get_all_users() if u[3] == "teacher"]
         self._asgn_teachers = teachers
         self.asgn_teacher_cb["values"] = [t[1] for t in teachers]
@@ -518,7 +503,7 @@ class AdminView:
             self.asgn_subject_cb.current(0)
 
     def _do_assign(self):
-        """Validate dropdowns, check for existing assignment, then persist."""
+        # Validate dropdowns, check for existing assignment, then persist.
         if not self._asgn_teachers or not self._asgn_subjects:
             self._show_asgn_status("No teachers or subjects available.", err=True)
             return
@@ -552,7 +537,7 @@ class AdminView:
             self._show_asgn_status(f"Error: {exc}", err=True)
 
     def _do_unassign(self):
-        """Remove the selected assignment row after confirmation."""
+        # Remove the selected assignment row after confirmation.
         sel = self.assign_tree.selection()
         if not sel:
             show_error(self.window, "No Selection", "Select a row to remove.")
@@ -575,8 +560,8 @@ class AdminView:
             except Exception as exc:
                 show_error(self.window, "Error", str(exc))
 
-    def _show_asgn_status(self, msg: str, err: bool = False):
-        """Temporary inline feedback next to the assignment buttons."""
+    def _show_asgn_status(self, msg, err: bool = False):
+        # Temporary inline feedback next to the assignment buttons.
         self.asgn_status_lbl.configure(
             text=msg, fg=THEME["COLOR_DANGER"] if err else THEME["COLOR_SUCCESS"])
         self.window.after(4000, lambda: self.asgn_status_lbl.configure(text=""))
@@ -584,7 +569,7 @@ class AdminView:
     # ── Enrollments tab ───────────────────────────────────────────
 
     def _build_enrollments_tab(self, parent):
-        """Enrollment manager: Treeview of all enrollments + Enroll / Remove controls."""
+        # Enrollment manager: Treeview of all enrollments + Enroll / Remove controls.
         tk.Label(parent, text="All Enrollments",
                  font=THEME["FONT_HEADING"], bg=BG, fg=FG
                  ).pack(anchor="w", pady=(8, 2), padx=5)
@@ -641,7 +626,7 @@ class AdminView:
         self._refresh_enroll_dropdowns()
 
     def _load_enrollments(self):
-        """Fetch all enrollment rows and populate the Treeview."""
+        # Fetch all enrollment rows and populate the Treeview.
         self.enroll_tree.delete(*self.enroll_tree.get_children())
         rows = self.db._fetch_all('''
             SELECT e.id, u.name, s.name, s.code
@@ -657,7 +642,7 @@ class AdminView:
                                     values=(r[1], r[2], r[3]))
 
     def _refresh_enroll_dropdowns(self):
-        """Rebuild the student and subject Combobox lists from live DB data."""
+        # Rebuild the student and subject Combobox lists from live DB data.
         students = self.db.get_all_students()   # (student_id, name, ...)
         self._enroll_students = students
         self.enroll_student_cb["values"] = [s[1] for s in students]
@@ -671,7 +656,7 @@ class AdminView:
             self.enroll_subject_cb.current(0)
 
     def _enroll_student(self):
-        """Read the dropdowns and insert the enrollment row."""
+        # Read the dropdowns and insert the enrollment row.
         s_idx = self.enroll_student_cb.current()
         j_idx = self.enroll_subject_cb.current()
         if s_idx < 0 or j_idx < 0:
@@ -695,7 +680,7 @@ class AdminView:
         self._show_enroll_status(f"Enrolled {student_name} in {subj_name}.", err=False)
 
     def _unenroll_student(self):
-        """Remove the selected enrollment row after confirmation."""
+        # Remove the selected enrollment row after confirmation.
         sel = self.enroll_tree.selection()
         if not sel:
             show_error(self.window, "No Selection", "Select an enrollment row to remove.")
@@ -722,8 +707,8 @@ class AdminView:
                 except Exception as exc:
                     show_error(self.window, "Error", str(exc))
 
-    def _show_enroll_status(self, msg: str, err: bool = False):
-        """Display a temporary inline status message next to the enrollment buttons."""
+    def _show_enroll_status(self, msg, err: bool = False):
+        # Display a temporary inline status message next to the enrollment buttons.
         self.enroll_status_lbl.configure(
             text=msg, fg=THEME["COLOR_DANGER"] if err else THEME["COLOR_SUCCESS"])
         self.window.after(4000, lambda: self.enroll_status_lbl.configure(text=""))
@@ -731,7 +716,7 @@ class AdminView:
     # ── Subjects tab ──────────────────────────────────────────────
 
     def _build_subjects_tab(self, parent):
-        """Subjects Treeview + Add-Subject form + Delete button."""
+        # Subjects Treeview + Add-Subject form + Delete button.
         # ── Treeview ──
         cols   = ("ID", "Subject Name", "Code", "Credit Hours")
         widths = [60, 320, 140, 100]
@@ -825,14 +810,14 @@ class AdminView:
         self._refresh_assign_dropdowns()
 
     def _load_subjects(self):
-        """Fetch all subjects from the DB and populate the Treeview."""
+        # Fetch all subjects from the DB and populate the Treeview.
         self.subj_tree.delete(*self.subj_tree.get_children())
         for row in self.db.get_all_subjects():
             # row: (id, name, code, credit_hours)
             self.subj_tree.insert("", "end", iid=str(row[0]), values=row)
 
     def _add_subject(self):
-        """Validate the form fields and insert a new subject row."""
+        # Validate the form fields and insert a new subject row.
         name = self.subj_name_var.get().strip()
         code = self.subj_code_var.get().strip()
         ch_str = getattr(self, "subj_ch_var", tk.StringVar(value="3")).get().strip()
@@ -865,7 +850,7 @@ class AdminView:
         self._refresh_enroll_dropdowns()
 
     def _delete_subject(self):
-        """Confirm and delete the selected subject row."""
+        # Confirm and delete the selected subject row.
         sel = self.subj_tree.selection()
         if not sel:
             show_error(self.window, "No Selection", "Select a subject to delete.")
@@ -890,14 +875,14 @@ class AdminView:
             except Exception as exc:
                 show_error(self.window, "Error", str(exc))
 
-    def _show_subj_status(self, msg: str, err: bool = False):
-        """Display a temporary feedback message next to the Add Subject button."""
+    def _show_subj_status(self, msg, err: bool = False):
+        # Display a temporary feedback message next to the Add Subject button.
         self.subj_status_lbl.configure(
             text=msg, fg=THEME["COLOR_DANGER"] if err else THEME["COLOR_SUCCESS"])
         self.window.after(3500, lambda: self.subj_status_lbl.configure(text=""))
 
     def _refresh_assign_dropdowns(self):
-        """Repopulate both Comboboxes in the Assign Teacher row from live DB data."""
+        # Repopulate both Comboboxes in the Assign Teacher row from live DB data.
         # Teacher dropdown — all users with role='teacher'
         teachers = [(u[0], u[1]) for u in self.db.get_all_users() if u[3] == "teacher"]
         self._assign_teachers = teachers   # [(user_id, name), ...]
@@ -913,7 +898,7 @@ class AdminView:
             self.assign_subject_cb.current(0)
 
     def _assign_teacher_to_subject(self):
-        """Read the two dropdowns and persist the assignment via the DB."""
+        # Read the two dropdowns and persist the assignment via the DB.
         if not self._assign_teachers or not self._assign_subjects:
             self._show_assign_status("No teachers or subjects available.", err=True)
             return
@@ -942,16 +927,16 @@ class AdminView:
         except Exception as exc:
             self._show_assign_status(f"Error: {exc}", err=True)
 
-    def _show_assign_status(self, msg: str, err: bool = False):
-        """Temporary feedback label next to the Assign button."""
+    def _show_assign_status(self, msg, err: bool = False):
+        # Temporary feedback label next to the Assign button.
         self.assign_status_lbl.configure(
             text=msg, fg=THEME["COLOR_DANGER"] if err else THEME["COLOR_SUCCESS"])
         self.window.after(4000, lambda: self.assign_status_lbl.configure(text=""))
 
     # ── Shared helpers ────────────────────────────────────────────
 
-    def _delete_selected(self, tree: ttk.Treeview, kind: str):
-        """Confirm and delete the currently selected row from the DB."""
+    def _delete_selected(self, tree: ttk.Treeview, kind):
+        # Confirm and delete the currently selected row from the DB.
         sel = tree.selection()
         if not sel:
             show_error(self.window, "No Selection", f"Select a {kind} row to delete.")
@@ -980,8 +965,8 @@ class AdminView:
             except Exception as exc:
                 show_error(self.window, "Error", str(exc))
 
-    def _make_popup(self, title: str, width: int, height: int) -> tk.Toplevel:
-        """Create a centred, modal Toplevel window."""
+    def _make_popup(self, title, width, height):
+        # Create a centred, modal Toplevel window.
         popup = tk.Toplevel(self.window)
         popup.title(title)
         popup.configure(bg=BG)
@@ -997,11 +982,11 @@ class AdminView:
     # ── Navigation ────────────────────────────────────────────────
 
     def _logout(self):
-        """Destroy window and return to login screen."""
+        # Destroy window and return to login screen.
         self.window.destroy()
         from gui.login_screen import LoginScreen
         LoginScreen(self.db).render()
 
     def render(self):
-        """Start the Tkinter event loop."""
+        # Start the Tkinter event loop.
         self.window.mainloop()

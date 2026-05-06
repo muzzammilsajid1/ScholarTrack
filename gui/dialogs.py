@@ -27,7 +27,7 @@ def _style_btn(btn, bg_color):
                   font=THEME["FONT_BUTTON"])
 
 
-def _create_base_dialog(parent, title: str, message: str, icon: str):
+def _create_base_dialog(parent, title, message, icon):
     dlg = tk.Toplevel(parent)
     dlg.title(title)
     center_window(dlg, 380, 260, parent)
@@ -44,7 +44,7 @@ def _create_base_dialog(parent, title: str, message: str, icon: str):
     return dlg
 
 
-def show_success(parent, title: str, message: str):
+def show_success(parent, title, message):
     dlg = _create_base_dialog(parent, title, message, "✅")
 
     btn = tk.Button(dlg, text="OK", command=dlg.destroy, width=12, height=2)
@@ -54,7 +54,7 @@ def show_success(parent, title: str, message: str):
     dlg.after(3000, lambda: dlg.destroy() if dlg.winfo_exists() else None)
 
 
-def show_error(parent, title: str, message: str):
+def show_error(parent, title, message):
     dlg = _create_base_dialog(parent, title, message, "❌")
 
     btn = tk.Button(dlg, text="OK", command=dlg.destroy, width=12, height=2)
@@ -62,7 +62,7 @@ def show_error(parent, title: str, message: str):
     btn.pack(pady=(0, 15))
 
 
-def show_confirm(parent, title: str, message: str) -> bool:
+def show_confirm(parent, title, message):
     dlg = _create_base_dialog(parent, title, message, "⚠️")
 
     result = {"value": False}
@@ -94,7 +94,7 @@ def show_confirm(parent, title: str, message: str) -> bool:
     return result["value"]
 
 
-def show_input_form(parent, title: str, fields: list) -> dict | None:
+def show_input_form(parent, title, fields):
     h = 100 + (50 * len(fields)) + 80
     dlg = tk.Toplevel(parent)
     dlg.title(title)

@@ -9,21 +9,18 @@
 #   model objects and views created per role),
 #   Inheritance (Student/Teacher/Admin all extend User)
 # -----------------------------------------------
-"""
-Login screen — standard Tkinter, no third-party GUI library.
-"""
+# Login screen — standard Tkinter, no third-party GUI library.
 import tkinter as tk
 from tkinter import ttk
 
 from gui.theme import THEME
-from database.db_manager import DatabaseManager
+from storage.file_manager import FileManager
 from models.student import Student
 from models.teacher import Teacher
 from models.admin import Admin
 from gui.teacher_view import TeacherView
 from gui.student_view import StudentView
 from gui.admin_view import AdminView
-from models.exceptions import PermissionDeniedError
 from gui.dialogs import show_error
 
 BG_DARK = THEME["COLOR_BG_DARK"]
@@ -33,16 +30,9 @@ ACCENT  = "#4a9eff"
 
 
 class LoginScreen:
-    """Handles GUI and logic for user authentication.
-
-    This class demonstrates encapsulation by isolating UI layouts from core application logic.
-    """
-    def __init__(self, db: DatabaseManager):
-        """Initializes the authentication GUI.
-
-        Args:
-            db (DatabaseManager): The initialized database connection manager.
-        """
+    # Handles GUI and logic for user authentication.
+    def __init__(self, db):
+        # Initializes the authentication GUI.
         self.db = db
 
         self.window = tk.Tk()
@@ -65,7 +55,7 @@ class LoginScreen:
         self.build_ui()
 
     def build_ui(self):
-        """Constructs every widget on the login card: logo, entries, button, footer."""
+        # Constructs every widget on the login card: logo, entries, button, footer.
         # ── Outer card frame ──────────────────────────────────────
         main_frame = tk.Frame(self.window, bg=BG_CARD)
         main_frame.pack(
@@ -153,8 +143,8 @@ class LoginScreen:
             fg=THEME["COLOR_TEXT_MUTED"],
         ).pack()
 
-    def _add_placeholder(self, entry: tk.Entry, placeholder: str, is_password=False):
-        """Simulates placeholder text: shows muted hint text until the user types."""
+    def _add_placeholder(self, entry, placeholder, is_password=False):
+        # Simulates placeholder text: shows muted hint text until the user types.
         # Insert the hint text and dim it so it reads as a placeholder.
         entry.insert(0, placeholder)
         entry.configure(fg=THEME["COLOR_TEXT_MUTED"])
@@ -177,8 +167,8 @@ class LoginScreen:
         entry.bind("<FocusOut>", on_focus_out)
 
     def attempt_login(self):
-        """Reads the entry fields, validates them, and either shows an error or
-        calls launch_dashboard() with the authenticated user row."""
+        # Reads the entry fields, validates them, and either shows an error or
+        # calls launch_dashboard() with the authenticated user row.
         username = self.entry_username.get().strip()
         password = self.entry_password.get().strip()
 
@@ -202,61 +192,53 @@ class LoginScreen:
             self.err_label.configure(text="Invalid username or password")
 
     def launch_dashboard(self, user_row, role):
-        """Constructs the correct model object for the role and opens its view window.
-
-        Args:
-            user_row (tuple): The validated DB row for the matched user.
-            role (str): The role string ('student', 'teacher', or 'admin').
-        """
+        # Constructs the correct model object for the role and opens its view window.
         user_id  = user_row[0]
         name     = user_row[1]
         username = user_row[2]
 
-        try:
-            # ── Build the domain model for this role ──────────────
-            model = None
-            if role == "student":
-                student_row = self.db._fetch_one(
-                    "SELECT * FROM students WHERE user_id = ?", (user_id,))
-                if student_row:
-                    s_id = student_row[0]
-                    sem  = student_row[2]
-                    dept = student_row[3]
-                    model = Student(s_id, name, username, sem, dept)
-            elif role == "teacher":
-                model = Teacher(user_id, name, username, "General")
-            elif role == "admin":
-                model = Admin(user_id, name, username, 3)
+        # ── Build the domain model for this role ──────────────
+        model = None
+        if role == "student":
+            student_row = self.db._fetch_one(
+                "SELECT * FROM students WHERE user_id = ?", (user_id,))
+            if student_row:
+                s_id = student_row[0]
+                sem  = student_row[2]
+                dept = student_row[3]
+                model = Student(s_id, name, username, sem, dept)
+        elif role == "teacher":
+            model = Teacher(user_id, name, username, "General")
+        elif role == "admin":
+            model = Admin(user_id, name, username, 3)
 
-            if not model:
-                return
+        if not model:
+            return
 
-            role_permission_map = {
-                "student": "view_own_grades",
-                "teacher": "edit_grades",
-                "admin":   "manage_users",
-            }
-            required = role_permission_map.get(role)
-            if not required or not model.has_permission(required):
-                raise PermissionDeniedError("Your account lacks the necessary system permissions to proceed.")
+        role_permission_map = {
+            "student": "view_own_grades",
+            "teacher": "edit_grades",
+            "admin":   "manage_users",
+        }
+        required = role_permission_map.get(role)
+        if not required or not model.has_permission(required):
+            show_error(self.window, "Access Denied", "Your account lacks the necessary system permissions to proceed.")
+            return
 
-            self.db.log_action(user_id, "LOGIN", username)
-            self.window.destroy()
+        self.db.log_action(user_id, "LOGIN", username)
+        self.window.destroy()
 
-            view = None
-            if role == "student":
-                view = StudentView(model, self.db)
-            elif role == "teacher":
-                view = TeacherView(model, self.db)
-            elif role == "admin":
-                view = AdminView(model, self.db)
+        view = None
+        if role == "student":
+            view = StudentView(model, self.db)
+        elif role == "teacher":
+            view = TeacherView(model, self.db)
+        elif role == "admin":
+            view = AdminView(model, self.db)
 
-            if view:
-                view.render()
-
-        except PermissionDeniedError as e:
-            show_error(self.window, "Access Denied", str(e))
+        if view:
+            view.render()
 
     def render(self):
-        """Renders the login screen window."""
+        # Renders the login screen window.
         self.window.mainloop()

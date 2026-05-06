@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Calculus",
+    "code": "MT101",
+    "credit_hours": 3,
+    "id": 1
+  },
+  {
+    "name": "Stats",
+    "code": "ES111",
+    "credit_hours": 3,
+    "id": 2
+  },
+  {
+    "name": "Materials",
+    "code": "MM101",
+    "credit_hours": 2,
+    "id": 3
+  },
+  {
+    "name": "Communications",
+    "code": "HM101",
+    "credit_hours": 1,
+    "id": 4
+  }
+]
