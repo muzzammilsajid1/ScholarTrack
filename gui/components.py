@@ -1,18 +1,18 @@
+# Contains reusable UI widget factories to avoid duplicating layout boilerplate
+# Abstraction: hides complex frame stacking and alignment logic inside simple factory methods
 import tkinter as tk
 from tkinter import ttk
 from gui.theme import THEME
 
 
 def create_header(parent, user_name, user_role, on_logout):
-    # Creates a reusable, standardized header bar across dynamic windows.
     BG = "#16213E"
     header = tk.Frame(parent, height=64, bg=BG)
     header.pack(fill="x")
 
-    # Needs to prevent squeezing smaller than height=64
+    # Force the header to maintain its layout height despite inner contents
     header.pack_propagate(False)
 
-    # --- LEFT SIDE --- #
     left_frame = tk.Frame(header, bg=BG)
     left_frame.pack(side="left", padx=(16, 0), fill="y")
 
@@ -31,8 +31,7 @@ def create_header(parent, user_name, user_role, on_logout):
     separator = tk.Frame(left_frame, width=1, height=30, bg="#3A3A4E")
     separator.pack(side="left", padx=16)
 
-    # --- CENTER --- #
-    # User wrapper expands and fills available space forcing the right frame to stay on the edge
+    # Center wrapper expands to push the right frame to the window edge
     center_frame = tk.Frame(header, bg=BG)
     center_frame.pack(side="left", fill="x", expand=True)
 
@@ -48,7 +47,6 @@ def create_header(parent, user_name, user_role, on_logout):
     )
     lbl_role.pack(anchor="w", pady=(0, 12))
 
-    # --- RIGHT SIDE --- #
     right_frame = tk.Frame(header, bg=BG)
     right_frame.pack(side="right", padx=(0, 16), fill="y")
 

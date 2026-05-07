@@ -1,9 +1,11 @@
-# Admin model class.
+# Represents a system administrator with broad privileges and analytical views
+# Inheritance: Admin extends User to avoid duplicating shared properties
+# Polymorphism: Admin overrides methods to supply global statistics rather than individual data
+# Encapsulation: Admin hides regex rules inside a simple validate_username utility method
 import re
 from models.user import User
 
 class Admin(User):
-    # Initializes an Admin instance.
     def __init__(self, admin_id, name, username, access_level=1):
         super().__init__(user_id=admin_id, name=name, username=username, role='admin')
         
@@ -18,7 +20,7 @@ class Admin(User):
             "at_risk_students": 0
         }
 
-    # Returns the system statistics dict for display on the admin dashboard.
+    # Extract required metrics so the dashboard can render without knowing the internal structure
     def get_dashboard_data(self):
         return {
             "total_students": self.system_stats.get("total_students", 0),
@@ -27,11 +29,11 @@ class Admin(User):
             "at_risk_students": self.system_stats.get("at_risk_students", 0)
         }
 
-    # Returns the full list of actions an admin is permitted to perform.
+    # Grant maximum system-level actions required to manage the LMS
     def get_permissions(self):
         return ["view_all_students", "edit_grades", "view_reports", "manage_users", "generate_pdf", "view_logs"]
 
-    # Produces a formatted plain-text summary of system-wide statistics.
+    # Assemble high-level KPIs into a readable block for external consumption
     def generate_report(self):
         return (
             f"=== System Administration Report ===\n"
@@ -45,7 +47,7 @@ class Admin(User):
             f"===================================="
         )
 
-    # Validates that a username is 3–20 word characters.
+    # Provide a static utility so any module can enforce uniform username rules
     @staticmethod
     def validate_username(username):
         if not isinstance(username, str):

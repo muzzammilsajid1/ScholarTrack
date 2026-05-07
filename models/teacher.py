@@ -1,14 +1,15 @@
-# Teacher model class.
+# Represents a faculty member who manages subjects and records grades
+# Inheritance: Teacher extends User to reuse shared fields like username
+# Polymorphism: implements Teacher-specific overrides for dashboard data and reports
 from models.user import User
 
 class Teacher(User):
-    # Initializes a Teacher instance.
     def __init__(self, teacher_id, name, username, department):
         super().__init__(user_id=teacher_id, name=name, username=username, role='teacher')
         self.department = department
         self.subjects = []
 
-    # Returns the data dict displayed on the teacher's dashboard.
+    # Package internal instance state so the view layer can display it without tight coupling
     def get_dashboard_data(self):
         return {
             "name": self.name,
@@ -16,11 +17,11 @@ class Teacher(User):
             "subjects": self.subjects
         }
 
-    # Returns the list of actions a teacher is allowed to perform.
+    # Explicitly list the privileges this role requires for authorization checks
     def get_permissions(self):
         return ["view_all_students", "edit_grades", "view_reports"]
 
-    # Builds a plain-text report listing all subjects and their class averages.
+    # Generate a formatted text summary of assigned subjects to simplify printing
     def generate_report(self):
         report_lines = [
             f"--- Teacher Report ---",

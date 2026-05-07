@@ -1,22 +1,9 @@
-# storage/file_manager.py — ScholarTrack LMS
-# 
-# Drop-in JSON replacement for database/db_manager.py.
-# Every public method signature is identical to DatabaseManager so the
-# rest of the codebase needs no changes beyond swapping the import.
-# 
-# Data is stored in six JSON files inside the  data/  folder:
-#     data/users.json
-#     data/students.json
-#     data/subjects.json
-#     data/grades.json
-#     data/enrollments.json
-#     data/attendance.json
-#     data/activity_log.json
-#     data/teacher_subjects.json
-# 
-# Each file holds a list of dicts.  Auto-incrementing IDs are tracked by
-# a separate  data/meta.json  file that stores the next available ID for
-# every collection.
+# Handles all persistent storage operations using local JSON files
+# Encapsulation: isolates file read/write logic so other modules don't worry about data format
+# Abstraction: provides simple CRUD methods without revealing the underlying JSON structure
+#
+# Data is stored in six JSON files inside the data/ folder.
+# Auto-incrementing IDs are tracked by a separate data/meta.json file.
 
 import os
 import json
@@ -87,7 +74,7 @@ def _next_id(collection):
 
 
 class FileManager:
-    # JSON-file storage backend with the same public API as DatabaseManager.
+
 
     # ── Lifecycle ─────────────────────────────────────────────────
 
@@ -108,40 +95,13 @@ class FileManager:
         self.seed_dummy_data()
 
     def close(self):
-        # No-op — JSON files are opened and closed per operation.
         pass
 
-    def connect(self):
-        # No-op — included for API compatibility with DatabaseManager.
-        pass
-
-    def initialize_tables(self):
-        # No-op — JSON files are already created in __init__.
-        pass
 
     # ── Internal helpers ──────────────────────────────────────────
 
     def _hash_password(self, password):
         return hashlib.sha256(password.encode("utf-8")).hexdigest()
-
-    # Provided so GradeService (which calls self.db._fetch_all) still works.
-    def _fetch_all(self, query, params=()):
-        # Not used internally — kept for compatibility with GradeService calls.
-        return []
-
-    def _fetch_one(self, query, params=()):
-        # Not used internally — kept for compatibility with login_screen calls.
-        return None
-
-    # ── Debug ─────────────────────────────────────────────────────
-
-    def debug_print_all(self):
-        # Print every record in all collections.
-        for key in ("users", "students", "subjects", "enrollments", "teacher_subjects"):
-            print(f"\n=== {key.upper()} ===")
-            for row in _read(key):
-                print(row)
-        print()
 
     # ── Seeding ───────────────────────────────────────────────────
 

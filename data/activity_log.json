@@ -5,5 +5,12 @@
     "action": "LOGIN",
     "target": "admin",
     "timestamp": "2026-05-06T15:45:18Z"
+  },
+  {
+    "id": 2,
+    "user_id": 6,
+    "action": "LOGIN",
+    "target": "admin",
+    "timestamp": "2026-05-07T06:42:59Z"
   }
 ]

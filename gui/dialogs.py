@@ -1,3 +1,6 @@
+# Provides reusable modal popup windows for alerts, confirmations, and input forms
+# Abstraction: exposes simple methods like show_success() without requiring clients to build Tkinter windows
+# Polymorphism: reuses a common base dialog factory to generate different visual outcomes
 import tkinter as tk
 from tkinter import ttk
 from gui.theme import THEME

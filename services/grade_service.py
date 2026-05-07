@@ -1,10 +1,13 @@
-# Service for grade calculations and analytics.
+# Provides business logic for calculating grades, GPAs, and class rankings
+# Encapsulation: groups all grading algorithms into a single stateless service class
+# Abstraction: hides complex aggregation rules behind simple methods like get_class_average()
 from storage.file_manager import FileManager
 
 class GradeService:
     def __init__(self, db):
         self.db = db
 
+    # Centralize grade threshold definitions to ensure consistency across all views
     def letter_grade(self, score):
         if not (0 <= score <= 100):
             print(f"Error: Score {score} is out of range. Must be between 0 and 100 inclusive.")
@@ -16,6 +19,7 @@ class GradeService:
         elif score >= 60: return 'D'
         else: return 'F'
 
+    # Convert numeric scores to GPA scale points before averaging to match university standards
     def calculate_gpa(self, scores):
         if not scores:
             return 0.0
@@ -32,6 +36,7 @@ class GradeService:
     def is_at_risk(self, gpa, threshold=2.0):
         return gpa < threshold
 
+    # Aggregate grades from all enrolled students to compute the subject-wide performance
     def get_class_average(self, subject_id):
         enrolled = self.db.get_students_in_subject(subject_id)
         scores = []
@@ -51,6 +56,7 @@ class GradeService:
             return 0.0
         return round(sum(scores) / len(scores), 2)
 
+    # Sort students globally by their average score to identify top performers
     def get_top_students(self, n=5):
         all_students = self.db.get_all_students()
         ranked = []
@@ -69,6 +75,7 @@ class GradeService:
         ranked.sort(key=lambda x: x["average_score"], reverse=True)
         return ranked[:n]
 
+    # Compute a quick snapshot of a student's standing for the dashboard
     def get_grade_summary(self, grades):
         if not grades:
             return {
@@ -117,6 +124,7 @@ class GradeService:
             "performance_label": label
         }
 
+    # Order grades chronologically or by score so UI tables appear logical
     def get_subject_ranking(self, grades):
         valid_grades = [g for g in grades if len(g) > 4 and g[3] is not None]
         sorted_grades = sorted(valid_grades, key=lambda x: x[3], reverse=True)

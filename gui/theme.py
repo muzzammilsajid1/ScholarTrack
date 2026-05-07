@@ -1,3 +1,5 @@
+# Centralizes UI styling constants to ensure a uniform look and feel across the application
+# Encapsulation: groups visual design tokens into a single accessible dictionary
 THEME = {
     "FONT_TITLE":   ("Segoe UI", 22, "bold"),
     "FONT_HEADING": ("Segoe UI", 14, "bold"),

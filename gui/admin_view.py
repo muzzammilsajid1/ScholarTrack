@@ -1,17 +1,6 @@
-# -----------------------------------------------
-# admin_view.py - ScholarTrack LMS
-# Role:     System administrator panel — manage
-#           students, teachers, subjects, attendance
-#           records, and view the activity log.
-# Key classes used, Admin,
-#                   DatabaseManager, GradeService
-# OOP concepts demonstrated: Encapsulation (all DB
-#   calls in named methods), Inheritance (Admin
-#   extends User), Abstraction (DatabaseManager
-#   hides all SQL), Polymorphism (_delete_selected
-#   works on any Treeview + kind string)
-# -----------------------------------------------
-# Admin view — standard Tkinter only.
+# System administrator panel for managing users, subjects, enrollments, and attendance
+# Encapsulation: isolates admin-specific GUI layouts and CRUD events
+# Polymorphism: reuses shared GUI components like dialogs and headers across different views
 import tkinter as tk
 from tkinter import ttk
 
@@ -48,7 +37,6 @@ class AdminView:
     # ── Shared Treeview style ─────────────────────────────────────
 
     def _apply_tree_style(self):
-        # Configure a single clam-based dark style for all Treeviews.
         s = ttk.Style()
         s.theme_use("clam")
         s.configure("Admin.Treeview",
@@ -384,21 +372,17 @@ class AdminView:
                   ).pack(side="left")
 
     def _load_attendance(self):
-        # Fetch all attendance records joined with student name and subject.
+        # Fetch all attendance records via the public API.
         self.att_tree.delete(*self.att_tree.get_children())
         try:
-            rows = self.db._fetch_all(
-                '''
-                SELECT a.id, u.name, su.name, a.date, a.status
-                FROM attendance a
-                JOIN students  s  ON a.student_id = s.id
-                JOIN users     u  ON s.user_id    = u.id
-                JOIN subjects  su ON a.subject_id = su.id
-                ORDER BY a.date DESC, u.name
-                '''
-            )
-            for row in rows:
-                self.att_tree.insert("", "end", iid=str(row[0]), values=row)
+            for student in self.db.get_all_students():
+                # student = (student_id, name, username, semester, dept)
+                student_id, student_name = student[0], student[1]
+                for rec in self.db.get_student_attendance(student_id):
+                    # rec = (att_id, subj_name, code, date, status)
+                    att_id, subj_name, code, date, status = rec
+                    self.att_tree.insert("", "end", iid=str(att_id),
+                                         values=(att_id, student_name, subj_name, date, status))
         except Exception as e:
             print(f"[AdminView] _load_attendance error: {e}")
 
@@ -626,20 +610,17 @@ class AdminView:
         self._refresh_enroll_dropdowns()
 
     def _load_enrollments(self):
-        # Fetch all enrollment rows and populate the Treeview.
+        # Fetch all enrollment rows via the public API.
         self.enroll_tree.delete(*self.enroll_tree.get_children())
-        rows = self.db._fetch_all('''
-            SELECT e.id, u.name, s.name, s.code
-            FROM enrollments e
-            JOIN students st ON e.student_id = st.id
-            JOIN users u ON st.user_id = u.id
-            JOIN subjects s ON e.subject_id = s.id
-            ORDER BY u.name, s.name
-        ''')
-        for r in rows:
-            # iid stores enrollment id for removal lookup
-            self.enroll_tree.insert("", "end", iid=str(r[0]),
-                                    values=(r[1], r[2], r[3]))
+        for student in self.db.get_all_students():
+            # student = (student_id, name, username, semester, dept)
+            student_id, student_name = student[0], student[1]
+            for subj in self.db.get_subjects_for_student(student_id):
+                # subj = (subject_id, name, code)
+                subject_id, subj_name, subj_code = subj
+                iid = f"{student_id}-{subject_id}"
+                self.enroll_tree.insert("", "end", iid=iid,
+                                        values=(student_name, subj_name, subj_code))
 
     def _refresh_enroll_dropdowns(self):
         # Rebuild the student and subject Combobox lists from live DB data.
@@ -686,26 +667,22 @@ class AdminView:
             show_error(self.window, "No Selection", "Select an enrollment row to remove.")
             return
 
-        enrollment_id = int(sel[0])
         row_vals    = self.enroll_tree.item(sel[0])["values"]
         student_name, subj_name = row_vals[0], row_vals[1]
         label = f"{student_name} from {subj_name}"
 
         if show_confirm(self.window, "Remove Enrollment",
                         f"Remove enrollment: {label}?"):
-            # Look up the actual student_id and subject_id from the enrollment row.
-            enroll_row = self.db._fetch_one(
-                "SELECT student_id, subject_id FROM enrollments WHERE id = ?",
-                (enrollment_id,))
-            if enroll_row:
-                try:
-                    self.db.unenroll_student(enroll_row[0], enroll_row[1])
-                    self.db.log_action(self.admin.id, "UNENROLLED", label)
-                    self._load_enrollments()
-                    self._refresh_enroll_dropdowns()
-                    self._show_enroll_status(f"Removed: {label}", err=False)
-                except Exception as exc:
-                    show_error(self.window, "Error", str(exc))
+            try:
+                # Parse student_id and subject_id directly from the iid (format: "student_id-subject_id").
+                student_id, subject_id = map(int, sel[0].split("-"))
+                self.db.unenroll_student(student_id, subject_id)
+                self.db.log_action(self.admin.id, "UNENROLLED", label)
+                self._load_enrollments()
+                self._refresh_enroll_dropdowns()
+                self._show_enroll_status(f"Removed: {label}", err=False)
+            except Exception as exc:
+                show_error(self.window, "Error", str(exc))
 
     def _show_enroll_status(self, msg, err: bool = False):
         # Display a temporary inline status message next to the enrollment buttons.

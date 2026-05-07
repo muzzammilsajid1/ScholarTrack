@@ -1,8 +1,9 @@
-# Student model class.
+# Represents a student entity within the academic tracking system
+# Inheritance: Student extends User to inherit common identity attributes without repeating code
+# Polymorphism: overrides abstract User methods to return student-specific dashboard data and privileges
 from models.user import User
 
 class Student(User):
-    # Initializes a Student instance.
     def __init__(self, student_id, name, username, semester, department):
         super().__init__(user_id=student_id, name=name, username=username, role='student')
         self.semester = semester
@@ -10,11 +11,11 @@ class Student(User):
         self.gpa = 0.0
         self.grades = []
 
-    # Returns the permissions granted to a student.
+    # Define the exact actions this specific role is allowed to perform system-wide
     def get_permissions(self):
         return ["view_own_grades", "view_own_report", "get_ai_feedback"]
 
-    # Returns a performance label string based on the student's GPA.
+    # Translate numeric GPA into human-readable tiers to simplify UI logic
     def get_performance_label(self):
         if self.gpa >= 3.5:
             return "Excellent"
@@ -25,7 +26,7 @@ class Student(User):
         else:
             return "At Risk"
 
-    # Returns the data dictionary shown on the student's dashboard.
+    # Format internal state into a generic dictionary so the view layer can bind to it
     def get_dashboard_data(self):
         return {
             "name": self.name,
@@ -35,7 +36,7 @@ class Student(User):
             "grades": self.grades
         }
 
-    # Returns a formatted plain-text report of the student's grades and GPA.
+    # Construct a standardized text layout of academic standing for easy export
     def generate_report(self):
         report_lines = [
             f"--- Performance Report ---",

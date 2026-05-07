@@ -1,21 +1,6 @@
-# -----------------------------------------------
-# teacher_view.py - ScholarTrack LMS
-# Role:     Lets a teacher browse students, edit
-#           their grades, and submit attendance.
-# Key classes used: TeacherView, Teacher,
-#                   DatabaseManager, GradeService
-# OOP concepts demonstrated: Encapsulation (state
-#   kept inside TeacherView), Inheritance (Teacher
-#   extends User), Abstraction (GradeService.letter_grade
-#   hides grading logic)
-# -----------------------------------------------
-# Teacher view — standard Tkinter only.
-# Layout:
-#   Header (create_header)
-#   ttk.Notebook with two tabs:
-#     • Grades     — left: student list  |  right: grade Treeview + score editor
-#     • Attendance — subject combobox, date entry, per-student status dropdowns,
-#                    Submit button
+# Provides an interface for teachers to manage grades and submit class attendance
+# Encapsulation: isolates UI layout and teacher-specific event handlers
+# Abstraction: uses GradeService to handle grade validations without writing custom checks
 import tkinter as tk
 from tkinter import ttk
 from datetime import date as dt_date
@@ -61,7 +46,6 @@ class TeacherView:
     # ── Shared style ──────────────────────────────────────────────
 
     def _apply_styles(self):
-        # Apply a single dark Treeview style and Notebook tab style.
         s = ttk.Style()
         s.theme_use("clam")
         s.configure("T.Treeview",
@@ -82,7 +66,6 @@ class TeacherView:
     # ── UI construction ───────────────────────────────────────────
 
     def _build_ui(self):
-        # Assemble header + Notebook, or a 'no subjects' notice if unassigned.
         create_header(self.window, self.teacher.name, "Teacher", self._logout)
 
         # If the admin hasn't assigned any subjects yet, show a helpful message
@@ -116,12 +99,10 @@ class TeacherView:
     # ── Grades tab ────────────────────────────────────────────────
 
     def _build_grades_tab(self, parent):
-        # Two-column layout: student list on left, grade editor on right.
         self._build_student_panel(parent)
         self._build_grade_panel(parent)
 
     def _build_student_panel(self, parent):
-        # Left column: search Entry + student Treeview.
         left = tk.Frame(parent, bg=CARD, width=340)
         left.pack(side="left", fill="y", padx=(0, 10))
         left.pack_propagate(False)
@@ -156,7 +137,6 @@ class TeacherView:
         self._populate_student_tree(self.all_students)
 
     def _populate_student_tree(self, students):
-        # Fill the student Treeview; iid = students.id string.
         self.student_tree.delete(*self.student_tree.get_children())
         for s in students:
             self.student_tree.insert("", "end", iid=str(s[0]), values=(s[1], s[4]))
@@ -177,7 +157,6 @@ class TeacherView:
         self._refresh_grade_panel()
 
     def _build_grade_panel(self, parent):
-        # Right column: grade Treeview + score-edit form.
         self.right = tk.Frame(parent, bg=BG)
         self.right.pack(side="left", fill="both", expand=True)
 
@@ -259,7 +238,6 @@ class TeacherView:
         self._show_status("Saved successfully.", err=False)
 
     def _show_status(self, msg, err=False):
-        # Show a temporary status message in the grade edit form.
         self.status_lbl.configure(
             text=msg, fg=THEME["COLOR_DANGER"] if err else THEME["COLOR_SUCCESS"])
         self.window.after(3000, lambda: self.status_lbl.configure(text=""))
@@ -267,7 +245,6 @@ class TeacherView:
     # ── Attendance tab ────────────────────────────────────────────
 
     def _build_attendance_tab(self, parent):
-        # Subject picker + date entry + per-student status dropdowns + Submit.
         # ── Controls row ──
         ctrl = tk.Frame(parent, bg=CARD, height=54)
         ctrl.pack(fill="x", pady=(0, 8))
@@ -460,7 +437,6 @@ class TeacherView:
         self._show_att_status(f"Saved for {count} student(s).", err=False)
 
     def _show_att_status(self, msg, err=False):
-        # Display a temporary status message; safe even if the window is destroyed first.
         try:
             if not self.att_status_lbl.winfo_exists():
                 return
@@ -480,11 +456,9 @@ class TeacherView:
     # ── Navigation ────────────────────────────────────────────────
 
     def _logout(self):
-        # Destroy window and return to login screen.
         self.window.destroy()
         from gui.login_screen import LoginScreen
         LoginScreen(self.db).render()
 
     def render(self):
-        # Start the Tkinter event loop.
         self.window.mainloop()
