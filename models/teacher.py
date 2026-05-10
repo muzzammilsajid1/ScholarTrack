@@ -8,7 +8,3 @@ class Teacher(User):
         super().__init__(user_id=user_id, name=name, username=username, role='teacher')
         self.department = department
         self.subjects = []
-
-    # Explicitly list the privileges this role requires for authorization checks
-    def get_permissions(self):
-        return ["view_all_students", "edit_grades", "view_reports"]

@@ -24,10 +24,7 @@ class AdminView:
         self.window = tk.Tk()
         self.window.title("ScholarTrack - Admin Dashboard")
         self.window.configure(bg=BG)
-        self.window.update_idletasks()
-        x = (self.window.winfo_screenwidth()  // 2) - (1100 // 2)
-        y = (self.window.winfo_screenheight() // 2) - (700  // 2)
-        self.window.geometry(f"1100x700+{x}+{y}")
+        self.window.geometry("1100x700")
         self.window.resizable(False, False)
 
         self._build_ui()
@@ -37,13 +34,8 @@ class AdminView:
     def _apply_tree_style(self):
         s = ttk.Style()
         s.theme_use("clam")
-        s.configure("Admin.Treeview",
-                    background=CARD, foreground=FG,
-                    fieldbackground=CARD, rowheight=30,
-                    font=THEME["FONT_BODY"])
-        s.configure("Admin.Treeview.Heading",
-                    background="#16213E", foreground=FG,
-                    font=THEME["FONT_BUTTON"])
+        s.configure("Admin.Treeview", background=CARD, foreground=FG, fieldbackground=CARD, rowheight=30, font=THEME["FONT_BODY"])
+        s.configure("Admin.Treeview.Heading", background="#16213E", foreground=FG, font=THEME["FONT_BUTTON"])
         s.map("Admin.Treeview.Heading", foreground=[("active", "#1e1e2e")])
         s.map("Admin.Treeview", background=[("selected", ACC)])
 
@@ -52,8 +44,7 @@ class AdminView:
         frame = tk.Frame(parent, bg=BG)
         frame.pack(fill="both", expand=True, pady=(5, 0))
 
-        tree = ttk.Treeview(frame, columns=columns, show="headings",
-                            style="Admin.Treeview")
+        tree = ttk.Treeview(frame, columns=columns, show="headings", style="Admin.Treeview")
         for col, w in zip(columns, widths):
             tree.heading(col, text=col)
             tree.column(col, width=w, anchor="w")
@@ -78,33 +69,23 @@ class AdminView:
         n_stu = len(self.db.get_all_students())
         n_tch = len([u for u in self.db.get_all_users() if u[3] == "teacher"])
         n_sub = len(self.db.get_all_subjects())
-        risk  = sum(1 for s in self.db.get_all_students()
-                    if self.db.get_student_gpa(s[0]) < 2.0)
+        risk  = sum(1 for s in self.db.get_all_students() if self.db.get_student_gpa(s[0]) < 2.0)
 
         bar = tk.Frame(self.window, bg=CARD, height=75)
         bar.pack(fill="x"); bar.pack_propagate(False)
 
-        for label, val, color in [
-            ("Students", n_stu,  FG),
-            ("Teachers", n_tch,  FG),
-            ("Subjects", n_sub,  FG),
-            ("At Risk",  risk,   THEME["COLOR_DANGER"] if risk else FG),
-        ]:
+        for label, val, color in [("Students", n_stu,  FG), ("Teachers", n_tch,  FG), ("Subjects", n_sub,  FG), ("At Risk",  risk,   THEME["COLOR_DANGER"] if risk else FG)]:
             cell = tk.Frame(bar, bg=CARD)
             cell.pack(side="left", expand=True, fill="both")
-            tk.Label(cell, text=str(val), font=THEME["FONT_TITLE"],
-                     bg=CARD, fg=color).pack()
-            tk.Label(cell, text=label, font=THEME["FONT_SMALL"],
-                     bg=CARD, fg=THEME["COLOR_TEXT_MUTED"]).pack()
+            tk.Label(cell, text=str(val), font=THEME["FONT_TITLE"], bg=CARD, fg=color).pack()
+            tk.Label(cell, text=label, font=THEME["FONT_SMALL"], bg=CARD, fg=THEME["COLOR_TEXT_MUTED"]).pack()
 
     def _build_notebook(self):
         # Create the ttk.Notebook with Students/Teachers/Subjects/Assignments/Enrollments/Attendance/Activity tabs.
         style = ttk.Style()
         style.configure("TNotebook",        background=BG, borderwidth=0)
-        style.configure("TNotebook.Tab",    background=CARD, foreground=FG,
-                        padding=[14, 6], font=THEME["FONT_BUTTON"])
-        style.map("TNotebook.Tab",          background=[("selected", ACC)],
-                  foreground=[("selected", FG)])
+        style.configure("TNotebook.Tab",    background=CARD, foreground=FG, padding=[14, 6], font=THEME["FONT_BUTTON"])
+        style.map("TNotebook.Tab",          background=[("selected", ACC)], foreground=[("selected", FG)])
 
         nb = ttk.Notebook(self.window)
         nb.pack(fill="both", expand=True, padx=15, pady=10)
@@ -114,29 +95,24 @@ class AdminView:
         tab_subjects    = tk.Frame(nb, bg=BG)
         tab_assignments = tk.Frame(nb, bg=BG)
         tab_enrollments = tk.Frame(nb, bg=BG)
-        tab_attendance  = tk.Frame(nb, bg=BG)
 
         nb.add(tab_students,    text="  Students  ")
         nb.add(tab_teachers,    text="  Teachers  ")
         nb.add(tab_subjects,    text="  Subjects  ")
         nb.add(tab_assignments, text="  Assignments  ")
         nb.add(tab_enrollments, text="  Enrollments  ")
-        nb.add(tab_attendance,  text="  Attendance  ")
 
         self._build_students_tab(tab_students)
         self._build_teachers_tab(tab_teachers)
         self._build_subjects_tab(tab_subjects)
         self._build_assignments_tab(tab_assignments)
         self._build_enrollments_tab(tab_enrollments)
-        self._build_attendance_tab(tab_attendance)
 
     # ── Students tab ─────────────────────────────────────────────
 
     def _build_students_tab(self, parent):
         # Students Treeview + Add / Delete buttons.
-        tk.Label(parent, text="All Students",
-                 font=THEME["FONT_HEADING"], bg=BG, fg=FG
-                 ).pack(anchor="w", pady=(8, 2))
+        tk.Label(parent, text="All Students", font=THEME["FONT_HEADING"], bg=BG, fg=FG).pack(anchor="w", pady=(8, 2))
 
         cols    = ("ID", "Name", "Username", "Department", "Sem", "GPA", "Status")
         widths  = [45, 180, 130, 160, 50, 70, 100]
@@ -145,18 +121,8 @@ class AdminView:
 
         btn_bar = tk.Frame(parent, bg=BG)
         btn_bar.pack(fill="x", pady=8)
-        tk.Button(btn_bar, text="Add Student",
-                  command=self._open_add_student,
-                  font=THEME["FONT_BUTTON"], bg=ACC, fg=FG,
-                  activebackground="#2563EB", relief="flat",
-                  cursor="hand2", padx=12, pady=4
-                  ).pack(side="left", padx=(0, 8))
-        tk.Button(btn_bar, text="Delete Selected",
-                  command=lambda: self._delete_selected(self.student_tree, "student"),
-                  font=THEME["FONT_BUTTON"], bg=THEME["COLOR_DANGER"], fg=FG,
-                  activebackground="#DC2626", relief="flat",
-                  cursor="hand2", padx=12, pady=4
-                  ).pack(side="left")
+        tk.Button(btn_bar, text="Add Student", command=self._open_add_student, font=THEME["FONT_BUTTON"], bg=ACC, fg=FG, activebackground="#2563EB", relief="flat", cursor="hand2", padx=12, pady=4).pack(side="left", padx=(0, 8))
+        tk.Button(btn_bar, text="Delete Selected", command=lambda: self._delete_selected(self.student_tree, "student"), font=THEME["FONT_BUTTON"], bg=THEME["COLOR_DANGER"], fg=FG, activebackground="#DC2626", relief="flat", cursor="hand2", padx=12, pady=4 ).pack(side="left")
 
     def _load_students(self):
         # Fetch all students from DB and populate the Treeview.
@@ -167,9 +133,7 @@ class AdminView:
                 continue
             gpa    = self.db.get_student_gpa(s_id) if s_id else 0.0
             status = "At Risk" if gpa < 2.0 else "Good"
-            self.student_tree.insert("", "end", iid=str(user_id),
-                                     values=(user_id, name, username,
-                                             dept or "", sem or "", f"{gpa:.2f}", status))
+            self.student_tree.insert("", "end", iid=str(user_id), values=(user_id, name, username, dept or "", sem or "", f"{gpa:.2f}", status))
 
     def _open_add_student(self):
         # Popup form to register a new student.
@@ -177,8 +141,7 @@ class AdminView:
         main  = tk.Frame(popup, bg=BG)
         main.pack(fill="both", expand=True, padx=30, pady=20)
 
-        tk.Label(main, text="Register Student",
-                 font=THEME["FONT_TITLE"], bg=BG, fg=FG).pack(pady=(0, 15))
+        tk.Label(main, text="Register Student", font=THEME["FONT_TITLE"], bg=BG, fg=FG).pack(pady=(0, 15))
 
         fields = {}
         for label, key, kw in [
@@ -188,16 +151,12 @@ class AdminView:
             ("Department",  "dept",  {}),
             ("Semester",    "sem",   {}),
         ]:
-            tk.Label(main, text=label, font=THEME["FONT_SMALL"],
-                     bg=BG, fg=THEME["COLOR_TEXT_MUTED"]).pack(anchor="w")
-            e = tk.Entry(main, font=THEME["FONT_BODY"], width=32,
-                         bg="#3A3A5E", fg=FG, insertbackground="white",
-                         relief="flat", **kw)
+            tk.Label(main, text=label, font=THEME["FONT_SMALL"], bg=BG, fg=THEME["COLOR_TEXT_MUTED"]).pack(anchor="w")
+            e = tk.Entry(main, font=THEME["FONT_BODY"], width=32, bg="#3A3A5E", fg=FG, insertbackground="white", relief="flat", **kw)
             e.pack(pady=(0, 8), ipady=5)
             fields[key] = e
 
-        err = tk.Label(main, text="", font=THEME["FONT_SMALL"],
-                       bg=BG, fg=THEME["COLOR_DANGER"])
+        err = tk.Label(main, text="", font=THEME["FONT_SMALL"], bg=BG, fg=THEME["COLOR_DANGER"])
         err.pack()
 
         def _commit():
@@ -211,25 +170,20 @@ class AdminView:
                 err.configure(text="Username must be 3–20 alphanumeric chars."); return
             try:
                 self.db.add_student(n, u, p, int(s), d)
-                
+                err.configure(text="")
                 popup.destroy()
                 self._load_students()
                 show_success(self.window, "Success", f"{n} added successfully.")
             except Exception as exc:
                 err.configure(text=str(exc))
 
-        tk.Button(main, text="Register", command=_commit,
-                  font=THEME["FONT_BUTTON"], bg=ACC, fg=FG,
-                  relief="flat", cursor="hand2", pady=6
-                  ).pack(fill="x", pady=(8, 0))
+        tk.Button(main, text="Register", command=_commit, font=THEME["FONT_BUTTON"], bg=ACC, fg=FG, relief="flat", cursor="hand2", pady=6).pack(fill="x", pady=(8, 0))
 
     # ── Teachers tab ─────────────────────────────────────────────
 
     def _build_teachers_tab(self, parent):
         # Teachers Treeview + Add / Delete buttons.
-        tk.Label(parent, text="All Teachers",
-                 font=THEME["FONT_HEADING"], bg=BG, fg=FG
-                 ).pack(anchor="w", pady=(8, 2))
+        tk.Label(parent, text="All Teachers", font=THEME["FONT_HEADING"], bg=BG, fg=FG).pack(anchor="w", pady=(8, 2))
 
         cols   = ("ID", "Name", "Username")
         widths = [60, 280, 200]
@@ -238,18 +192,8 @@ class AdminView:
 
         btn_bar = tk.Frame(parent, bg=BG)
         btn_bar.pack(fill="x", pady=8)
-        tk.Button(btn_bar, text="Add Teacher",
-                  command=self._open_add_teacher,
-                  font=THEME["FONT_BUTTON"], bg=ACC, fg=FG,
-                  activebackground="#2563EB", relief="flat",
-                  cursor="hand2", padx=12, pady=4
-                  ).pack(side="left", padx=(0, 8))
-        tk.Button(btn_bar, text="Delete Selected",
-                  command=lambda: self._delete_selected(self.teacher_tree, "teacher"),
-                  font=THEME["FONT_BUTTON"], bg=THEME["COLOR_DANGER"], fg=FG,
-                  activebackground="#DC2626", relief="flat",
-                  cursor="hand2", padx=12, pady=4
-                  ).pack(side="left")
+        tk.Button(btn_bar, text="Add Teacher", command=self._open_add_teacher, font=THEME["FONT_BUTTON"], bg=ACC, fg=FG, activebackground="#2563EB", relief="flat", cursor="hand2", padx=12, pady=4).pack(side="left", padx=(0, 8))
+        tk.Button(btn_bar, text="Delete Selected", command=lambda: self._delete_selected(self.teacher_tree, "teacher"), font=THEME["FONT_BUTTON"], bg=THEME["COLOR_DANGER"], fg=FG, activebackground="#DC2626", relief="flat", cursor="hand2", padx=12, pady=4).pack(side="left")
 
     def _load_teachers(self):
         # Fetch all teachers and populate the Treeview.
@@ -257,8 +201,7 @@ class AdminView:
         for u in self.db.get_all_users():
             user_id, name, username, role, *_ = u
             if role == "teacher":
-                self.teacher_tree.insert("", "end", iid=str(user_id),
-                                         values=(user_id, name, username))
+                self.teacher_tree.insert("", "end", iid=str(user_id), values=(user_id, name, username))
 
     def _open_add_teacher(self):
         # Popup form to register a new teacher.
@@ -266,8 +209,7 @@ class AdminView:
         main  = tk.Frame(popup, bg=BG)
         main.pack(fill="both", expand=True, padx=30, pady=20)
 
-        tk.Label(main, text="Register Teacher",
-                 font=THEME["FONT_TITLE"], bg=BG, fg=FG).pack(pady=(0, 15))
+        tk.Label(main, text="Register Teacher", font=THEME["FONT_TITLE"], bg=BG, fg=FG).pack(pady=(0, 15))
 
         fields = {}
         for label, key, kw in [
@@ -275,16 +217,12 @@ class AdminView:
             ("Username",  "user", {}),
             ("Password",  "pass", {"show": "•"}),
         ]:
-            tk.Label(main, text=label, font=THEME["FONT_SMALL"],
-                     bg=BG, fg=THEME["COLOR_TEXT_MUTED"]).pack(anchor="w")
-            e = tk.Entry(main, font=THEME["FONT_BODY"], width=32,
-                         bg="#3A3A5E", fg=FG, insertbackground="white",
-                         relief="flat", **kw)
+            tk.Label(main, text=label, font=THEME["FONT_SMALL"], bg=BG, fg=THEME["COLOR_TEXT_MUTED"]).pack(anchor="w")
+            e = tk.Entry(main, font=THEME["FONT_BODY"], width=32, bg="#3A3A5E", fg=FG, insertbackground="white", relief="flat", **kw)
             e.pack(pady=(0, 8), ipady=5)
             fields[key] = e
 
-        err = tk.Label(main, text="", font=THEME["FONT_SMALL"],
-                       bg=BG, fg=THEME["COLOR_DANGER"])
+        err = tk.Label(main, text="", font=THEME["FONT_SMALL"], bg=BG, fg=THEME["COLOR_DANGER"])
         err.pack()
 
         def _commit():
@@ -304,82 +242,15 @@ class AdminView:
             except Exception as exc:
                 err.configure(text=str(exc))
 
-        tk.Button(main, text="Register", command=_commit,
-                  font=THEME["FONT_BUTTON"], bg=ACC, fg=FG,
-                  relief="flat", cursor="hand2", pady=6
-                  ).pack(fill="x", pady=(8, 0))
+        tk.Button(main, text="Register", command=_commit, font=THEME["FONT_BUTTON"], bg=ACC, fg=FG, relief="flat", cursor="hand2", pady=6).pack(fill="x", pady=(8, 0))
 
 
-
-    # ── Attendance tab ─────────────────────────────────────────
-
-    def _build_attendance_tab(self, parent):
-        # Read-only Treeview of all attendance records + Delete Selected button.
-        tk.Label(parent, text="All Attendance Records",
-                 font=THEME["FONT_HEADING"], bg=BG, fg=FG
-                 ).pack(anchor="w", pady=(8, 2))
-
-        cols   = ("ID", "Student", "Subject", "Date", "Status")
-        widths = [50, 220, 200, 120, 100]
-        self.att_tree = self._make_treeview(parent, cols, widths)
-        self._load_attendance()
-
-        btn_bar = tk.Frame(parent, bg=BG)
-        btn_bar.pack(fill="x", pady=8)
-        tk.Button(btn_bar, text="Delete Selected Record",
-                  command=self._delete_att_record,
-                  font=THEME["FONT_BUTTON"], bg=THEME["COLOR_DANGER"], fg=FG,
-                  activebackground="#DC2626", relief="flat",
-                  cursor="hand2", padx=12, pady=4
-                  ).pack(side="left", padx=(0, 8))
-        tk.Button(btn_bar, text="Refresh",
-                  command=self._load_attendance,
-                  font=THEME["FONT_BUTTON"], bg=CARD, fg=FG,
-                  activebackground="#3A3A5E", relief="solid", bd=1,
-                  cursor="hand2", padx=12, pady=4
-                  ).pack(side="left")
-
-    def _load_attendance(self):
-        # Fetch all attendance records via the public API.
-        self.att_tree.delete(*self.att_tree.get_children())
-        try:
-            for student in self.db.get_all_students():
-                # student = (student_id, name, username, semester, dept)
-                student_id, student_name = student[0], student[1]
-                for rec in self.db.get_student_attendance(student_id):
-                    # rec = (att_id, subj_name, code, date, status)
-                    att_id, subj_name, code, date, status = rec
-                    self.att_tree.insert("", "end", iid=str(att_id),
-                                         values=(att_id, student_name, subj_name, date, status))
-        except Exception as e:
-            print(f"[AdminView] _load_attendance error: {e}")
-
-    def _delete_att_record(self):
-        # Delete the selected attendance row after confirmation.
-        sel = self.att_tree.selection()
-        if not sel:
-            show_error(self.window, "No Selection",
-                       "Select an attendance row to delete."); return
-        att_id   = int(sel[0])
-        row_vals = self.att_tree.item(sel[0])["values"]
-        label    = f"{row_vals[1]} — {row_vals[2]} on {row_vals[3]}"
-        if show_confirm(self.window, "Delete Attendance Record",
-                        f"Delete this record?\n\n{label}"):
-            try:
-                self.db.delete_attendance(att_id)
-                
-                self.att_tree.delete(sel[0])
-                show_success(self.window, "Deleted", "Attendance record removed.")
-            except Exception as exc:
-                show_error(self.window, "Error", str(exc))
 
     # ── Assignments tab ───────────────────────────────────────────
 
     def _build_assignments_tab(self, parent):
         # Teacher–Subject assignment manager: Treeview + Assign / Remove controls.
-        tk.Label(parent, text="Teacher–Subject Assignments",
-                 font=THEME["FONT_HEADING"], bg=BG, fg=FG
-                 ).pack(anchor="w", pady=(8, 2), padx=5)
+        tk.Label(parent, text="Teacher–Subject Assignments", font=THEME["FONT_HEADING"], bg=BG, fg=FG).pack(anchor="w", pady=(8, 2), padx=5)
 
         # ── Treeview ──
         cols   = ("Teacher", "Subject", "Code")
@@ -392,41 +263,24 @@ class AdminView:
         ctrl.pack(fill="x", padx=5, pady=(8, 4))
 
         # Teacher dropdown
-        tk.Label(ctrl, text="Teacher:", font=THEME["FONT_BODY"],
-                 bg=CARD, fg=FG).pack(side="left", padx=(10, 4), pady=10)
+        tk.Label(ctrl, text="Teacher:", font=THEME["FONT_BODY"], bg=CARD, fg=FG).pack(side="left", padx=(10, 4), pady=10)
         self.asgn_teacher_var = tk.StringVar()
-        self.asgn_teacher_cb  = ttk.Combobox(ctrl, textvariable=self.asgn_teacher_var,
-                                              state="readonly",
-                                              font=THEME["FONT_BODY"], width=22)
+        self.asgn_teacher_cb  = ttk.Combobox(ctrl, textvariable=self.asgn_teacher_var, state="readonly", font=THEME["FONT_BODY"], width=22)
         self.asgn_teacher_cb.pack(side="left", padx=(0, 10))
 
         # Subject dropdown
-        tk.Label(ctrl, text="Subject:", font=THEME["FONT_BODY"],
-                 bg=CARD, fg=FG).pack(side="left", padx=(0, 4))
+        tk.Label(ctrl, text="Subject:", font=THEME["FONT_BODY"], bg=CARD, fg=FG).pack(side="left", padx=(0, 4))
         self.asgn_subject_var = tk.StringVar()
-        self.asgn_subject_cb  = ttk.Combobox(ctrl, textvariable=self.asgn_subject_var,
-                                              state="readonly",
-                                              font=THEME["FONT_BODY"], width=22)
+        self.asgn_subject_cb  = ttk.Combobox(ctrl, textvariable=self.asgn_subject_var, state="readonly", font=THEME["FONT_BODY"], width=22)
         self.asgn_subject_cb.pack(side="left", padx=(0, 10))
 
         # Assign button
-        tk.Button(ctrl, text="Assign",
-                  command=self._do_assign,
-                  font=THEME["FONT_BUTTON"],
-                  bg=ACC, fg=FG, activebackground="#2563EB",
-                  relief="flat", cursor="hand2", padx=12, pady=4
-                  ).pack(side="left", padx=(0, 6))
+        tk.Button(ctrl, text="Assign", command=self._do_assign, font=THEME["FONT_BUTTON"], bg=ACC, fg=FG, activebackground="#2563EB", relief="flat", cursor="hand2", padx=12, pady=4).pack(side="left", padx=(0, 6))
 
         # Remove button
-        tk.Button(ctrl, text="Remove Selected",
-                  command=self._do_unassign,
-                  font=THEME["FONT_BUTTON"],
-                  bg=THEME["COLOR_DANGER"], fg=FG, activebackground="#DC2626",
-                  relief="flat", cursor="hand2", padx=12, pady=4
-                  ).pack(side="left")
+        tk.Button(ctrl, text="Remove Selected", command=self._do_unassign, font=THEME["FONT_BUTTON"], bg=THEME["COLOR_DANGER"], fg=FG, activebackground="#DC2626", relief="flat", cursor="hand2", padx=12, pady=4).pack(side="left")
 
-        self.asgn_status_lbl = tk.Label(ctrl, text="",
-                                        font=THEME["FONT_SMALL"], bg=CARD, fg=FG)
+        self.asgn_status_lbl = tk.Label(ctrl, text="", font=THEME["FONT_SMALL"], bg=CARD, fg=FG)
         self.asgn_status_lbl.pack(side="left", padx=10)
 
         self._refresh_asgn_dropdowns()
@@ -437,8 +291,7 @@ class AdminView:
         for row in self.db.get_all_assignments():
             # row: (teacher_name, subject_name, code, teacher_id, subject_id)
             iid = f"{row[3]}:{row[4]}"   # unique key for removal
-            self.assign_tree.insert("", "end", iid=iid,
-                                    values=(row[0], row[1], row[2]))
+            self.assign_tree.insert("", "end", iid=iid, values=(row[0], row[1], row[2]))
 
     def _refresh_asgn_dropdowns(self):
         # Rebuild teacher and subject Comboboxes from live DB data.
@@ -521,9 +374,7 @@ class AdminView:
 
     def _build_enrollments_tab(self, parent):
         # Enrollment manager: Treeview of all enrollments + Enroll / Remove controls.
-        tk.Label(parent, text="All Enrollments",
-                 font=THEME["FONT_HEADING"], bg=BG, fg=FG
-                 ).pack(anchor="w", pady=(8, 2), padx=5)
+        tk.Label(parent, text="All Enrollments", font=THEME["FONT_HEADING"], bg=BG, fg=FG).pack(anchor="w", pady=(8, 2), padx=5)
 
         # ── Treeview ──
         cols   = ("Student", "Subject", "Code")
@@ -536,41 +387,24 @@ class AdminView:
         ctrl.pack(fill="x", padx=5, pady=(8, 4))
 
         # Student dropdown
-        tk.Label(ctrl, text="Student:", font=THEME["FONT_BODY"],
-                 bg=CARD, fg=FG).pack(side="left", padx=(10, 4), pady=10)
+        tk.Label(ctrl, text="Student:", font=THEME["FONT_BODY"], bg=CARD, fg=FG).pack(side="left", padx=(10, 4), pady=10)
         self.enroll_student_var = tk.StringVar()
-        self.enroll_student_cb  = ttk.Combobox(ctrl, textvariable=self.enroll_student_var,
-                                               state="readonly",
-                                               font=THEME["FONT_BODY"], width=22)
+        self.enroll_student_cb  = ttk.Combobox(ctrl, textvariable=self.enroll_student_var, state="readonly", font=THEME["FONT_BODY"], width=22)
         self.enroll_student_cb.pack(side="left", padx=(0, 12))
 
         # Subject dropdown
-        tk.Label(ctrl, text="Subject:", font=THEME["FONT_BODY"],
-                 bg=CARD, fg=FG).pack(side="left", padx=(0, 4))
+        tk.Label(ctrl, text="Subject:", font=THEME["FONT_BODY"], bg=CARD, fg=FG).pack(side="left", padx=(0, 4))
         self.enroll_subject_var = tk.StringVar()
-        self.enroll_subject_cb  = ttk.Combobox(ctrl, textvariable=self.enroll_subject_var,
-                                               state="readonly",
-                                               font=THEME["FONT_BODY"], width=22)
+        self.enroll_subject_cb  = ttk.Combobox(ctrl, textvariable=self.enroll_subject_var, state="readonly", font=THEME["FONT_BODY"], width=22)
         self.enroll_subject_cb.pack(side="left", padx=(0, 12))
 
         # Enroll button
-        tk.Button(ctrl, text="Enroll",
-                  command=self._enroll_student,
-                  font=THEME["FONT_BUTTON"],
-                  bg=ACC, fg=FG, activebackground="#2563EB",
-                  relief="flat", cursor="hand2", padx=12, pady=4
-                  ).pack(side="left", padx=(0, 6))
+        tk.Button(ctrl, text="Enroll", command=self._enroll_student, font=THEME["FONT_BUTTON"], bg=ACC, fg=FG, activebackground="#2563EB", relief="flat", cursor="hand2", padx=12, pady=4).pack(side="left", padx=(0, 6))
 
         # Remove button
-        tk.Button(ctrl, text="Remove Selected",
-                  command=self._unenroll_student,
-                  font=THEME["FONT_BUTTON"],
-                  bg=THEME["COLOR_DANGER"], fg=FG, activebackground="#DC2626",
-                  relief="flat", cursor="hand2", padx=12, pady=4
-                  ).pack(side="left")
+        tk.Button(ctrl, text="Remove Selected", command=self._unenroll_student, font=THEME["FONT_BUTTON"], bg=THEME["COLOR_DANGER"], fg=FG, activebackground="#DC2626", relief="flat", cursor="hand2", padx=12, pady=4).pack(side="left")
 
-        self.enroll_status_lbl = tk.Label(ctrl, text="",
-                                          font=THEME["FONT_SMALL"], bg=CARD, fg=FG)
+        self.enroll_status_lbl = tk.Label(ctrl, text="", font=THEME["FONT_SMALL"], bg=CARD, fg=FG)
         self.enroll_status_lbl.pack(side="left", padx=10)
 
         # Populate dropdowns on first build.
@@ -586,8 +420,7 @@ class AdminView:
                 # subj = (subject_id, name, code)
                 subject_id, subj_name, subj_code = subj
                 iid = f"{student_id}-{subject_id}"
-                self.enroll_tree.insert("", "end", iid=iid,
-                                        values=(student_name, subj_name, subj_code))
+                self.enroll_tree.insert("", "end", iid=iid, values=(student_name, subj_name, subj_code))
 
     def _refresh_enroll_dropdowns(self):
         # Rebuild the student and subject Combobox lists from live DB data.
@@ -637,8 +470,7 @@ class AdminView:
         student_name, subj_name = row_vals[0], row_vals[1]
         label = f"{student_name} from {subj_name}"
 
-        if show_confirm(self.window, "Remove Enrollment",
-                        f"Remove enrollment: {label}?"):
+        if show_confirm(self.window, "Remove Enrollment", f"Remove enrollment: {label}?"):
             try:
                 # Parse student_id and subject_id directly from the iid (format: "student_id-subject_id").
                 student_id, subject_id = map(int, sel[0].split("-"))
@@ -670,83 +502,45 @@ class AdminView:
         form = tk.Frame(parent, bg=CARD)
         form.pack(fill="x", padx=5, pady=(8, 4))
 
-        tk.Label(form, text="Subject Name:", font=THEME["FONT_BODY"],
-                 bg=CARD, fg=FG).pack(side="left", padx=(10, 4), pady=10)
+        tk.Label(form, text="Subject Name:", font=THEME["FONT_BODY"], bg=CARD, fg=FG).pack(side="left", padx=(10, 4), pady=10)
         self.subj_name_var = tk.StringVar()
-        tk.Entry(form, textvariable=self.subj_name_var, width=28,
-                 font=THEME["FONT_BODY"],
-                 bg="#3A3A5E", fg=FG, insertbackground="white", relief="flat"
-                 ).pack(side="left", ipady=4, padx=(0, 16))
+        tk.Entry(form, textvariable=self.subj_name_var, width=28, font=THEME["FONT_BODY"], bg="#3A3A5E", fg=FG, insertbackground="white", relief="flat").pack(side="left", ipady=4, padx=(0, 16))
 
-        tk.Label(form, text="Code:", font=THEME["FONT_BODY"],
-                 bg=CARD, fg=FG).pack(side="left", padx=(0, 4))
+        tk.Label(form, text="Code:", font=THEME["FONT_BODY"], bg=CARD, fg=FG).pack(side="left", padx=(0, 4))
         self.subj_code_var = tk.StringVar()
-        tk.Entry(form, textvariable=self.subj_code_var, width=10,
-                 font=THEME["FONT_BODY"],
-                 bg="#3A3A5E", fg=FG, insertbackground="white", relief="flat"
-                 ).pack(side="left", ipady=4, padx=(0, 10))
+        tk.Entry(form, textvariable=self.subj_code_var, width=10, font=THEME["FONT_BODY"], bg="#3A3A5E", fg=FG, insertbackground="white", relief="flat").pack(side="left", ipady=4, padx=(0, 10))
 
-        tk.Label(form, text="CH:", font=THEME["FONT_BODY"],
-                 bg=CARD, fg=FG).pack(side="left", padx=(0, 4))
+        tk.Label(form, text="CH:", font=THEME["FONT_BODY"], bg=CARD, fg=FG).pack(side="left", padx=(0, 4))
         self.subj_ch_var = tk.StringVar(value="3")
-        tk.Entry(form, textvariable=self.subj_ch_var, width=4,
-                 font=THEME["FONT_BODY"],
-                 bg="#3A3A5E", fg=FG, insertbackground="white", relief="flat"
-                 ).pack(side="left", ipady=4, padx=(0, 16))
+        tk.Entry(form, textvariable=self.subj_ch_var, width=4, font=THEME["FONT_BODY"], bg="#3A3A5E", fg=FG, insertbackground="white", relief="flat").pack(side="left", ipady=4, padx=(0, 16))
 
-        tk.Button(form, text="Add Subject",
-                  command=self._add_subject,
-                  font=THEME["FONT_BUTTON"],
-                  bg=ACC, fg=FG, activebackground="#2563EB",
-                  relief="flat", cursor="hand2", padx=12, pady=4
-                  ).pack(side="left", padx=(0, 8))
+        tk.Button(form, text="Add Subject", command=self._add_subject, font=THEME["FONT_BUTTON"], bg=ACC, fg=FG, activebackground="#2563EB", relief="flat", cursor="hand2", padx=12, pady=4).pack(side="left", padx=(0, 8))
 
-        tk.Button(form, text="Delete Selected",
-                  command=self._delete_subject,
-                  font=THEME["FONT_BUTTON"],
-                  bg=THEME["COLOR_DANGER"], fg=FG, activebackground="#DC2626",
-                  relief="flat", cursor="hand2", padx=12, pady=4
-                  ).pack(side="left")
+        tk.Button(form, text="Delete Selected", command=self._delete_subject, font=THEME["FONT_BUTTON"], bg=THEME["COLOR_DANGER"], fg=FG, activebackground="#DC2626", relief="flat", cursor="hand2", padx=12, pady=4).pack(side="left")
 
-        self.subj_status_lbl = tk.Label(form, text="",
-                                        font=THEME["FONT_SMALL"], bg=CARD, fg=FG)
+        self.subj_status_lbl = tk.Label(form, text="", font=THEME["FONT_SMALL"], bg=CARD, fg=FG)
         self.subj_status_lbl.pack(side="left", padx=10)
 
         # ── Assign Teacher row ──
         assign_row = tk.Frame(parent, bg=CARD)
         assign_row.pack(fill="x", padx=5, pady=(0, 8))
 
-        tk.Label(assign_row, text="Assign:", font=THEME["FONT_BODY"],
-                 bg=CARD, fg=FG).pack(side="left", padx=(10, 6), pady=10)
+        tk.Label(assign_row, text="Assign:", font=THEME["FONT_BODY"], bg=CARD, fg=FG).pack(side="left", padx=(10, 6), pady=10)
 
         # Teacher combobox
-        tk.Label(assign_row, text="Teacher", font=THEME["FONT_SMALL"],
-                 bg=CARD, fg=THEME["COLOR_TEXT_MUTED"]).pack(side="left", padx=(0, 2))
+        tk.Label(assign_row, text="Teacher", font=THEME["FONT_SMALL"], bg=CARD, fg=THEME["COLOR_TEXT_MUTED"]).pack(side="left", padx=(0, 2))
         self.assign_teacher_var = tk.StringVar()
-        self.assign_teacher_cb  = ttk.Combobox(assign_row,
-                                               textvariable=self.assign_teacher_var,
-                                               state="readonly",
-                                               font=THEME["FONT_BODY"], width=22)
+        self.assign_teacher_cb  = ttk.Combobox(assign_row, textvariable=self.assign_teacher_var, state="readonly", font=THEME["FONT_BODY"], width=22)
         self.assign_teacher_cb.pack(side="left", padx=(0, 10))
 
-        tk.Label(assign_row, text="→  Subject", font=THEME["FONT_SMALL"],
-                 bg=CARD, fg=THEME["COLOR_TEXT_MUTED"]).pack(side="left", padx=(0, 2))
+        tk.Label(assign_row, text="→  Subject", font=THEME["FONT_SMALL"], bg=CARD, fg=THEME["COLOR_TEXT_MUTED"]).pack(side="left", padx=(0, 2))
         self.assign_subject_var = tk.StringVar()
-        self.assign_subject_cb  = ttk.Combobox(assign_row,
-                                               textvariable=self.assign_subject_var,
-                                               state="readonly",
-                                               font=THEME["FONT_BODY"], width=22)
+        self.assign_subject_cb  = ttk.Combobox(assign_row, textvariable=self.assign_subject_var, state="readonly", font=THEME["FONT_BODY"], width=22)
         self.assign_subject_cb.pack(side="left", padx=(0, 10))
 
-        tk.Button(assign_row, text="Assign",
-                  command=self._assign_teacher_to_subject,
-                  font=THEME["FONT_BUTTON"],
-                  bg=THEME["COLOR_SUCCESS"], fg=FG, activebackground="#16A34A",
-                  relief="flat", cursor="hand2", padx=12, pady=4
-                  ).pack(side="left")
+        tk.Button(assign_row, text="Assign", command=self._assign_teacher_to_subject, font=THEME["FONT_BUTTON"], bg=THEME["COLOR_SUCCESS"], fg=FG, activebackground="#16A34A", relief="flat", cursor="hand2", padx=12, pady=4).pack(side="left")
 
-        self.assign_status_lbl = tk.Label(assign_row, text="",
-                                          font=THEME["FONT_SMALL"], bg=CARD, fg=FG)
+        self.assign_status_lbl = tk.Label(assign_row, text="", font=THEME["FONT_SMALL"], bg=CARD, fg=FG)
         self.assign_status_lbl.pack(side="left", padx=10)
 
         # Populate both assign dropdowns on first build.
@@ -915,10 +709,7 @@ class AdminView:
         popup.resizable(False, False)
         popup.grab_set()
         popup.focus()
-        popup.update_idletasks()
-        x = (popup.winfo_screenwidth()  // 2) - (width  // 2)
-        y = (popup.winfo_screenheight() // 2) - (height // 2)
-        popup.geometry(f"{width}x{height}+{x}+{y}")
+        popup.geometry(f"{width}x{height}")
         return popup
 
     # ── Navigation ────────────────────────────────────────────────

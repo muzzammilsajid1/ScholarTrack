@@ -12,6 +12,3 @@ class Student(User):
         self.gpa = 0.0
         self.grades = []
 
-    def get_permissions(self):
-        return ["view_own_grades"]
-

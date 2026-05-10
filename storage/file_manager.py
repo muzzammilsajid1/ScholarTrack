@@ -21,7 +21,6 @@ _FILES = {
     "subjects":        "subjects.json",
     "grades":          "grades.json",
     "enrollments":     "enrollments.json",
-    "attendance":      "attendance.json",
     "teacher_subjects": "teacher_subjects.json",
     "meta":            "meta.json",
 }
@@ -217,8 +216,6 @@ class FileManager:
             _write("enrollments", enrollments)
             grades = [g for g in _read("grades") if g["student_id"] != sid]
             _write("grades", grades)
-            attendance = [a for a in _read("attendance") if a["student_id"] != sid]
-            _write("attendance", attendance)
 
         # If teacher, remove teacher_subjects.
         ts = [t for t in _read("teacher_subjects") if t["teacher_id"] != user_id]
@@ -308,7 +305,6 @@ class FileManager:
         _write("grades",       [g for g in _read("grades")       if g["subject_id"] != subject_id])
         _write("enrollments",  [e for e in _read("enrollments")  if e["subject_id"] != subject_id])
         _write("teacher_subjects", [t for t in _read("teacher_subjects") if t["subject_id"] != subject_id])
-        _write("attendance",   [a for a in _read("attendance")   if a["subject_id"] != subject_id])
 
     # ── Enrollment queries ────────────────────────────────────────
 
@@ -452,48 +448,3 @@ class FileManager:
 
 
 
-    # ── Attendance ────────────────────────────────────────────────
-
-    def mark_attendance(self, student_id, subject_id, date, status):
-        # Insert or replace an attendance record for student/subject/date.
-        if status not in ("Present", "Absent", "Late"):
-            print(f"[FM Error] Invalid attendance status: {status}")
-            return
-        attendance = _read("attendance")
-        for rec in attendance:
-            if (rec["student_id"] == student_id
-                    and rec["subject_id"] == subject_id
-                    and rec["date"] == date):
-                rec["status"] = status
-                _write("attendance", attendance)
-                return
-        aid = _next_id("attendance")
-        attendance.append({"id": aid, "student_id": student_id, "subject_id": subject_id, "date": date, "status": status})
-        _write("attendance", attendance)
-
-    def get_student_attendance(self, student_id):
-        # Returns tuples (id, subj_name, code, date, status) sorted newest-first.
-        records  = [a for a in _read("attendance") if a["student_id"] == student_id]
-        subjects = {s["id"]: s for s in _read("subjects")}
-        result = []
-        for a in records:
-            s = subjects.get(a["subject_id"])
-            if s:
-                result.append((a["id"], s["name"], s["code"], a["date"], a["status"]))
-        return sorted(result, key=lambda x: x[3], reverse=True)
-
-    def get_attendance_summary(self, student_id):
-        # Returns {total, present, absent, late, percentage}.
-        records = [a for a in _read("attendance") if a["student_id"] == student_id]
-        total   = len(records)
-        present = sum(1 for a in records if a["status"] == "Present")
-        absent  = sum(1 for a in records if a["status"] == "Absent")
-        late    = sum(1 for a in records if a["status"] == "Late")
-        pct     = round((present / total) * 100, 1) if total else 0.0
-        return {"total": total, "present": present,
-                "absent": absent, "late": late, "percentage": pct}
-
-    def delete_attendance(self, attendance_id):
-        # Delete a single attendance record by its ID.
-        attendance = [a for a in _read("attendance") if a["id"] != attendance_id]
-        _write("attendance", attendance)
