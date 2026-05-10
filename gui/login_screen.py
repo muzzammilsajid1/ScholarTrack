@@ -26,10 +26,7 @@ class LoginScreen:
         self.window = tk.Tk()
         self.window.title("ScholarTrack - Login")
 
-        self.window.update_idletasks()
-        x = (self.window.winfo_screenwidth()  // 2) - (420 // 2)
-        y = (self.window.winfo_screenheight() // 2) - (580 // 2)
-        self.window.geometry(f"420x580+{x}+{y}")
+        self.window.geometry("420x580")
         self.window.resizable(False, False)
         self.window.configure(bg=BG_DARK)
 
