@@ -7,9 +7,6 @@ from datetime import date as dt_date
 
 from gui.theme import THEME
 from gui.components import create_header
-from gui.dialogs import show_success, show_error
-from models.teacher import Teacher
-from storage.file_manager import FileManager
 from services.grade_service import GradeService
 
 BG   = THEME["COLOR_BG_DARK"]
@@ -231,8 +228,7 @@ class TeacherView:
         grade_id = int(sel[0])
         letter   = self.grade_service.letter_grade(score)
         self.db.update_grade(grade_id, score, letter)
-        self.db.log_action(self.teacher.id, "GRADE_UPDATED",
-                           f"student_id={self.selected_student_id} grade_id={grade_id}")
+
         self.selected_grades = self.db.get_student_grades(self.selected_student_id, self.teacher.id)
         self._refresh_grade_panel()
         self._show_status("Saved successfully.", err=False)
@@ -429,8 +425,7 @@ class TeacherView:
             self.db.mark_attendance(student_id, subject_id, date_str, status)
 
         count = len(self.attendance_vars)
-        self.db.log_action(self.teacher.id, "ATTENDANCE_SUBMITTED",
-                           f"subject_id={subject_id} date={date_str} students={count}")
+
 
         from tkinter import messagebox
         messagebox.showinfo("Done", f"Attendance saved for {count} students.\nDate: {date_str}")

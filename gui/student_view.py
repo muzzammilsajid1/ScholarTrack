@@ -8,9 +8,6 @@ from tkinter import ttk
 
 from gui.theme import THEME
 from gui.components import create_header
-from gui.dialogs import show_success, show_error
-from models.student import Student
-from storage.file_manager import FileManager
 from services.grade_service import GradeService
 
 BG   = THEME["COLOR_BG_DARK"]
@@ -41,20 +38,18 @@ class StudentView:
     # ── Data ──────────────────────────────────────────────────────
 
     def _load_data(self):
-        self.enrolled_subjects = self.db.get_subjects_for_student(self.student.id)
+        self.enrolled_subjects = self.db.get_subjects_for_student(self.student.student_id)
         # Cache enrolled subject codes to quickly filter global grade records
         self._enrolled_codes   = {s[2] for s in self.enrolled_subjects}
 
-        all_grades = self.db.get_student_grades(self.student.id)
+        all_grades = self.db.get_student_grades(self.student.student_id)
         # Prevent display of grades for subjects the student is no longer enrolled in
         self.student.grades = [g for g in all_grades if len(g) >= 3 and g[2] in self._enrolled_codes]
 
         scores = [g[3] for g in self.student.grades if g[3] is not None]
         self.student.gpa = self.grade_service.calculate_gpa(scores)
-
-        self.student.gpa = self.grade_service.calculate_gpa(scores)
-        self.attendance_rows    = self.db.get_student_attendance(self.student.id)
-        self.attendance_summary = self.db.get_attendance_summary(self.student.id)
+        self.attendance_rows    = self.db.get_student_attendance(self.student.student_id)
+        self.attendance_summary = self.db.get_attendance_summary(self.student.student_id)
 
     # ── Shared style ──────────────────────────────────────────────
 
@@ -202,7 +197,6 @@ class StudentView:
         popup.geometry("600x450")
         popup.configure(bg=BG)
         popup.transient(self.window)
-        popup.grab_set()
 
         # Handle window close
         def on_close():
@@ -210,17 +204,13 @@ class StudentView:
             popup.destroy()
         popup.protocol("WM_DELETE_WINDOW", on_close)
 
-        lbl = tk.Label(popup, text="Connecting to Gemini AI… please wait.",
-                       font=THEME["FONT_BODY"], bg=BG, fg=FG)
+        lbl = tk.Label(popup, text="Connecting to Gemini AI… please wait.", font=THEME["FONT_BODY"], bg=BG, fg=FG)
         lbl.pack(pady=10)
 
         txt_frame = tk.Frame(popup, bg=CARD)
         txt_frame.pack(fill="both", expand=True, padx=15, pady=(0, 15))
 
-        ai_text = tk.Text(txt_frame, wrap="word",
-                          font=("Segoe UI", 11),
-                          bg="#1A1A2E", fg=FG,
-                          insertbackground="white", relief="flat")
+        ai_text = tk.Text(txt_frame, wrap="word", font=("Segoe UI", 11), bg="#1A1A2E", fg=FG, insertbackground="white", relief="flat")
         sb = ttk.Scrollbar(txt_frame, orient="vertical", command=ai_text.yview)
         ai_text.configure(yscrollcommand=sb.set)
         ai_text.pack(side="left", fill="both", expand=True)

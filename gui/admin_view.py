@@ -8,8 +8,7 @@ from gui.theme import THEME
 from gui.components import create_header
 from gui.dialogs import show_success, show_error, show_confirm
 from models.admin import Admin
-from storage.file_manager import FileManager
-from services.grade_service import GradeService
+
 
 BG   = THEME["COLOR_BG_DARK"]
 CARD = THEME["COLOR_BG_CARD"]
@@ -19,9 +18,8 @@ ACC  = "#4a9eff"
 
 class AdminView:
     def __init__(self, admin, db):
-        self.admin         = admin
-        self.db            = db
-        self.grade_service = GradeService(self.db)
+        self.admin = admin
+        self.db    = db
 
         self.window = tk.Tk()
         self.window.title("ScholarTrack - Admin Dashboard")
@@ -117,7 +115,6 @@ class AdminView:
         tab_assignments = tk.Frame(nb, bg=BG)
         tab_enrollments = tk.Frame(nb, bg=BG)
         tab_attendance  = tk.Frame(nb, bg=BG)
-        tab_activity    = tk.Frame(nb, bg=BG)
 
         nb.add(tab_students,    text="  Students  ")
         nb.add(tab_teachers,    text="  Teachers  ")
@@ -125,7 +122,6 @@ class AdminView:
         nb.add(tab_assignments, text="  Assignments  ")
         nb.add(tab_enrollments, text="  Enrollments  ")
         nb.add(tab_attendance,  text="  Attendance  ")
-        nb.add(tab_activity,    text="  Activity Log  ")
 
         self._build_students_tab(tab_students)
         self._build_teachers_tab(tab_teachers)
@@ -133,7 +129,6 @@ class AdminView:
         self._build_assignments_tab(tab_assignments)
         self._build_enrollments_tab(tab_enrollments)
         self._build_attendance_tab(tab_attendance)
-        self._build_activity_tab(tab_activity)
 
     # ── Students tab ─────────────────────────────────────────────
 
@@ -216,7 +211,7 @@ class AdminView:
                 err.configure(text="Username must be 3–20 alphanumeric chars."); return
             try:
                 self.db.add_student(n, u, p, int(s), d)
-                self.db.log_action(self.admin.id, "USER_CREATED", u)
+                
                 popup.destroy()
                 self._load_students()
                 show_success(self.window, "Success", f"{n} added successfully.")
@@ -302,7 +297,7 @@ class AdminView:
                 result = self.db.add_teacher(n, u, p)
                 if result is None:
                     err.configure(text="Username already exists."); return
-                self.db.log_action(self.admin.id, "TEACHER_CREATED", u)
+                
                 popup.destroy()
                 self._load_teachers()
                 show_success(self.window, "Success", f"Teacher '{n}' registered.")
@@ -314,34 +309,7 @@ class AdminView:
                   relief="flat", cursor="hand2", pady=6
                   ).pack(fill="x", pady=(8, 0))
 
-    # ── Activity tab ──────────────────────────────────────────────
 
-    def _build_activity_tab(self, parent):
-        # Read-only activity log Treeview + refresh button.
-        tk.Label(parent, text="Recent Activity",
-                 font=THEME["FONT_HEADING"], bg=BG, fg=FG
-                 ).pack(anchor="w", pady=(8, 2))
-
-        cols   = ("Time", "Action", "Target")
-        widths = [140, 200, 400]
-        self.activity_tree = self._make_treeview(parent, cols, widths)
-        self._load_activity()
-
-        tk.Button(parent, text="Refresh Log",
-                  command=self._load_activity,
-                  font=THEME["FONT_BUTTON"], bg=CARD, fg=FG,
-                  activebackground="#3A3A5E", relief="solid", bd=1,
-                  cursor="hand2", padx=12, pady=4
-                  ).pack(anchor="w", pady=8)
-
-    def _load_activity(self):
-        # Fetch the 50 most recent log entries.
-        self.activity_tree.delete(*self.activity_tree.get_children())
-        logs = self.db.get_recent_activity(50)
-        for action, target, ts in (logs or []):
-            time_str = ts.split(" ")[1] if ts and " " in ts else (ts or "")
-            self.activity_tree.insert("", "end",
-                                      values=(time_str, action, target or ""))
 
     # ── Attendance tab ─────────────────────────────────────────
 
@@ -399,7 +367,7 @@ class AdminView:
                         f"Delete this record?\n\n{label}"):
             try:
                 self.db.delete_attendance(att_id)
-                self.db.log_action(self.admin.id, "ATTENDANCE_DELETED", label)
+                
                 self.att_tree.delete(sel[0])
                 show_success(self.window, "Deleted", "Attendance record removed.")
             except Exception as exc:
@@ -512,8 +480,7 @@ class AdminView:
 
         try:
             self.db.assign_subject_to_teacher(teacher_id, subject_id)
-            self.db.log_action(self.admin.id, "SUBJECT_ASSIGNED",
-                               f"{subj_name} ({subj_code}) → {teacher_name}")
+            
             self._load_assignments()
             self._refresh_asgn_dropdowns()
             self._show_asgn_status(f"✔ {subj_name} assigned to {teacher_name}", err=False)
@@ -537,7 +504,7 @@ class AdminView:
         if show_confirm(self.window, "Remove Assignment", f"Remove assignment:\n{label}?"):
             try:
                 self.db.unassign_subject_from_teacher(teacher_id, subject_id)
-                self.db.log_action(self.admin.id, "SUBJECT_UNASSIGNED", label)
+                
                 self._load_assignments()
                 self._refresh_asgn_dropdowns()
                 self._show_asgn_status(f"Removed: {label}", err=False)
@@ -653,8 +620,7 @@ class AdminView:
             self._show_enroll_status(f"{student_name} is already enrolled in {subj_name}.", err=True)
             return
 
-        self.db.log_action(self.admin.id, "ENROLLED",
-                           f"{student_name} → {subj_name} ({subj_code})")
+        
         # Reload Treeview AND dropdowns so fresh data is reflected everywhere.
         self._load_enrollments()
         self._refresh_enroll_dropdowns()
@@ -677,7 +643,7 @@ class AdminView:
                 # Parse student_id and subject_id directly from the iid (format: "student_id-subject_id").
                 student_id, subject_id = map(int, sel[0].split("-"))
                 self.db.unenroll_student(student_id, subject_id)
-                self.db.log_action(self.admin.id, "UNENROLLED", label)
+                
                 self._load_enrollments()
                 self._refresh_enroll_dropdowns()
                 self._show_enroll_status(f"Removed: {label}", err=False)
@@ -814,7 +780,7 @@ class AdminView:
             self._show_subj_status("Failed — code may already exist.", err=True)
             return
 
-        self.db.log_action(self.admin.id, "SUBJECT_CREATED", f"{name} ({code})")
+        
         self.subj_name_var.set("")
         self.subj_code_var.set("")
         if hasattr(self, "subj_ch_var"):
@@ -840,7 +806,7 @@ class AdminView:
                         f"All grades linked to this subject will also be removed."):
             try:
                 self.db.delete_subject(subj_id)
-                self.db.log_action(self.admin.id, "SUBJECT_DELETED", label)
+                
                 show_success(self.window, "Deleted", f"'{label}' removed.")
                 # Refresh Treeview and all subject-dependent dropdowns across every tab.
                 self._load_subjects()
@@ -894,8 +860,7 @@ class AdminView:
 
         try:
             self.db.assign_subject_to_teacher(teacher_id, subject_id)
-            self.db.log_action(self.admin.id, "SUBJECT_ASSIGNED",
-                               f"{subj_name} ({subj_code}) → {teacher_name}")
+            
             # Keep the Assignments tab Treeview in sync.
             self._load_assignments()
             self._refresh_asgn_dropdowns()
@@ -927,7 +892,7 @@ class AdminView:
                         f"Permanently delete '{name_col}' and all their data?"):
             try:
                 self.db.delete_user(user_id)
-                self.db.log_action(self.admin.id, f"{kind.upper()}_DELETED", str(name_col))
+                
                 show_success(self.window, "Deleted", f"'{name_col}' removed.")
                 # Reload whichever list changed and resync every dependent dropdown.
                 if kind == "student":

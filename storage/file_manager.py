@@ -8,7 +8,7 @@
 import os
 import json
 import hashlib
-from datetime import datetime
+
 
 
 # ── Path helpers ──────────────────────────────────────────────────────────────
@@ -22,7 +22,6 @@ _FILES = {
     "grades":          "grades.json",
     "enrollments":     "enrollments.json",
     "attendance":      "attendance.json",
-    "activity_log":    "activity_log.json",
     "teacher_subjects": "teacher_subjects.json",
     "meta":            "meta.json",
 }
@@ -163,8 +162,7 @@ class FileManager:
             eid = _next_id("enrollments")
             enrollments.append({"id": eid, "student_id": student_id, "subject_id": subject_id})
             gid = _next_id("grades")
-            grades.append({"id": gid, "student_id": student_id, "subject_id": subject_id,
-                           "score": None, "grade_letter": None, "semester": 1})
+            grades.append({"id": gid, "student_id": student_id, "subject_id": subject_id, "score": None, "grade_letter": None, "semester": 1})
         _write("enrollments", enrollments)
         _write("grades", grades)
 
@@ -173,8 +171,7 @@ class FileManager:
         teacher_subjects = [{"teacher_id": t, "subject_id": s} for t, s in ts_seed]
         _write("teacher_subjects", teacher_subjects)
 
-        print("[Seed] Enrolled students in MT101 (subject 1):",
-              self.get_students_in_subject(1))
+        print("[Seed] Enrolled students in MT101 (subject 1):", self.get_students_in_subject(1))
 
     # ── Authentication ────────────────────────────────────────────
 
@@ -248,14 +245,12 @@ class FileManager:
                 return None
             hashed  = self._hash_password(password)
             user_id = _next_id("users")
-            users.append({"id": user_id, "name": name, "username": username,
-                          "password": hashed, "role": "student"})
+            users.append({"id": user_id, "name": name, "username": username, "password": hashed, "role": "student"})
             _write("users", users)
 
             students = _read("students")
             s_id = _next_id("students")
-            students.append({"id": s_id, "user_id": user_id,
-                             "semester": semester, "department": department})
+            students.append({"id": s_id, "user_id": user_id, "semester": semester, "department": department})
             _write("students", students)
             return user_id
         except Exception as e:
@@ -282,8 +277,7 @@ class FileManager:
                 return None
             hashed  = self._hash_password(password)
             user_id = _next_id("users")
-            users.append({"id": user_id, "name": name, "username": username,
-                          "password": hashed, "role": "teacher"})
+            users.append({"id": user_id, "name": name, "username": username, "password": hashed, "role": "teacher"})
             _write("users", users)
             return user_id
         except Exception as e:
@@ -294,8 +288,7 @@ class FileManager:
 
     def get_all_subjects(self):
         # Returns tuples: (subject_id, name, code, credit_hours).
-        return [(s["id"], s["name"], s["code"], s["credit_hours"])
-                for s in _read("subjects")]
+        return [(s["id"], s["name"], s["code"], s["credit_hours"]) for s in _read("subjects")]
 
     def add_subject(self, name, code, credit_hours):
         # Insert a new subject; returns the new subject_id or None on duplicate code.
@@ -304,8 +297,7 @@ class FileManager:
         if any(s["code"] == code for s in subjects):
             return None
         sid = _next_id("subjects")
-        subjects.append({"id": sid, "name": name.strip(),
-                         "code": code, "credit_hours": credit_hours})
+        subjects.append({"id": sid, "name": name.strip(), "code": code, "credit_hours": credit_hours})
         _write("subjects", subjects)
         return sid
 
@@ -323,8 +315,7 @@ class FileManager:
     def enroll_student(self, student_id, subject_id):
         # Enroll a student; also creates a blank grade row. Returns True on success.
         enrollments = _read("enrollments")
-        if any(e["student_id"] == student_id and e["subject_id"] == subject_id
-               for e in enrollments):
+        if any(e["student_id"] == student_id and e["subject_id"] == subject_id for e in enrollments):
             return False
         eid = _next_id("enrollments")
         enrollments.append({"id": eid, "student_id": student_id, "subject_id": subject_id})
@@ -334,21 +325,18 @@ class FileManager:
         sem = next((s["semester"] for s in students if s["id"] == student_id), 1)
         grades = _read("grades")
         gid = _next_id("grades")
-        grades.append({"id": gid, "student_id": student_id, "subject_id": subject_id,
-                       "score": None, "grade_letter": None, "semester": sem})
+        grades.append({"id": gid, "student_id": student_id, "subject_id": subject_id, "score": None, "grade_letter": None, "semester": sem})
         _write("grades", grades)
         return True
 
     def unenroll_student(self, student_id, subject_id):
         # Remove an enrollment row.
-        enrollments = [e for e in _read("enrollments")
-                       if not (e["student_id"] == student_id and e["subject_id"] == subject_id)]
+        enrollments = [e for e in _read("enrollments") if not (e["student_id"] == student_id and e["subject_id"] == subject_id)]
         _write("enrollments", enrollments)
 
     def get_students_in_subject(self, subject_id):
         # Returns tuples (student_id, name, username, semester, dept) sorted by name.
-        enrolled_ids = {e["student_id"] for e in _read("enrollments")
-                        if e["subject_id"] == subject_id}
+        enrolled_ids = {e["student_id"] for e in _read("enrollments") if e["subject_id"] == subject_id}
         students = {s["id"]: s for s in _read("students")}
         users    = {u["id"]: u for u in _read("users")}
         result = []
@@ -358,32 +346,27 @@ class FileManager:
                 continue
             u = users.get(s["user_id"])
             if u:
-                result.append((s["id"], u["name"], u["username"],
-                               s["semester"], s["department"]))
+                result.append((s["id"], u["name"], u["username"], s["semester"], s["department"]))
         return sorted(result, key=lambda x: x[1])
 
     def get_subjects_for_student(self, student_id):
         # Returns tuples (subject_id, name, code) sorted by name.
-        enrolled_ids = {e["subject_id"] for e in _read("enrollments")
-                        if e["student_id"] == student_id}
+        enrolled_ids = {e["subject_id"] for e in _read("enrollments") if e["student_id"] == student_id}
         subjects = {s["id"]: s for s in _read("subjects")}
-        result = [(subjects[sid]["id"], subjects[sid]["name"], subjects[sid]["code"])
-                  for sid in enrolled_ids if sid in subjects]
+        result = [(subjects[sid]["id"], subjects[sid]["name"], subjects[sid]["code"]) for sid in enrolled_ids if sid in subjects]
         return sorted(result, key=lambda x: x[1])
 
     # ── Teacher–subject assignments ───────────────────────────────
 
     def assign_subject_to_teacher(self, teacher_id, subject_id):
         # Assign a subject to a teacher (idempotent — replaces any existing row).
-        ts = [t for t in _read("teacher_subjects")
-              if not (t["teacher_id"] == teacher_id and t["subject_id"] == subject_id)]
+        ts = [t for t in _read("teacher_subjects") if not (t["teacher_id"] == teacher_id and t["subject_id"] == subject_id)]
         ts.append({"teacher_id": teacher_id, "subject_id": subject_id})
         _write("teacher_subjects", ts)
 
     def unassign_subject_from_teacher(self, teacher_id, subject_id):
         # Remove a teacher–subject assignment.
-        ts = [t for t in _read("teacher_subjects")
-              if not (t["teacher_id"] == teacher_id and t["subject_id"] == subject_id)]
+        ts = [t for t in _read("teacher_subjects") if not (t["teacher_id"] == teacher_id and t["subject_id"] == subject_id)]
         _write("teacher_subjects", ts)
 
     def get_all_assignments(self):
@@ -395,8 +378,7 @@ class FileManager:
             u = users.get(t["teacher_id"])
             s = subjects.get(t["subject_id"])
             if u and s:
-                result.append((u["name"], s["name"], s["code"],
-                               t["teacher_id"], t["subject_id"]))
+                result.append((u["name"], s["name"], s["code"], t["teacher_id"], t["subject_id"]))
         return sorted(result, key=lambda x: (x[0], x[1]))
 
     def get_teacher_subjects(self, teacher_id):
@@ -423,12 +405,10 @@ class FileManager:
     def get_students_for_teacher(self, teacher_id):
         # Returns distinct (student_id, name, username, semester, dept) for students
         # enrolled in any subject taught by this teacher.
-        my_subjects = {t["subject_id"] for t in _read("teacher_subjects")
-                       if t["teacher_id"] == teacher_id}
+        my_subjects = {t["subject_id"] for t in _read("teacher_subjects") if t["teacher_id"] == teacher_id}
         if not my_subjects:
             return []
-        my_student_ids = {e["student_id"] for e in _read("enrollments")
-                          if e["subject_id"] in my_subjects}
+        my_student_ids = {e["student_id"] for e in _read("enrollments") if e["subject_id"] in my_subjects}
         students = {s["id"]: s for s in _read("students")}
         users    = {u["id"]: u for u in _read("users")}
         result = []
@@ -438,8 +418,7 @@ class FileManager:
                 continue
             u = users.get(s["user_id"])
             if u:
-                result.append((s["id"], u["name"], u["username"],
-                               s["semester"], s["department"]))
+                result.append((s["id"], u["name"], u["username"], s["semester"], s["department"]))
         return sorted(result, key=lambda x: x[1])
 
     # ── Grade queries ─────────────────────────────────────────────
@@ -451,16 +430,14 @@ class FileManager:
         subjects = {s["id"]: s for s in _read("subjects")}
 
         if teacher_id is not None:
-            my_subjects = {t["subject_id"] for t in _read("teacher_subjects")
-                           if t["teacher_id"] == teacher_id}
+            my_subjects = {t["subject_id"] for t in _read("teacher_subjects") if t["teacher_id"] == teacher_id}
             grades = [g for g in grades if g["subject_id"] in my_subjects]
 
         result = []
         for g in grades:
             s = subjects.get(g["subject_id"])
             if s:
-                result.append((g["id"], s["name"], s["code"],
-                               g["score"], g["grade_letter"], g["semester"]))
+                result.append((g["id"], s["name"], s["code"], g["score"], g["grade_letter"], g["semester"]))
         return result
 
     def update_grade(self, grade_id, score, grade_letter):
@@ -473,26 +450,7 @@ class FileManager:
                 break
         _write("grades", grades)
 
-    # ── Activity log ──────────────────────────────────────────────
 
-    def log_action(self, user_id, action, target=None):
-        # Append one entry to activity_log.json.
-        log = _read("activity_log")
-        lid = _next_id("activity_log")
-        log.append({
-            "id":        lid,
-            "user_id":   user_id,
-            "action":    action,
-            "target":    target,
-            "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-        })
-        _write("activity_log", log)
-
-    def get_recent_activity(self, limit=8):
-        # Returns tuples (action, target, timestamp) for the most recent entries.
-        log = sorted(_read("activity_log"),
-                     key=lambda x: x["timestamp"], reverse=True)
-        return [(e["action"], e["target"], e["timestamp"]) for e in log[:limit]]
 
     # ── Attendance ────────────────────────────────────────────────
 
@@ -510,8 +468,7 @@ class FileManager:
                 _write("attendance", attendance)
                 return
         aid = _next_id("attendance")
-        attendance.append({"id": aid, "student_id": student_id,
-                           "subject_id": subject_id, "date": date, "status": status})
+        attendance.append({"id": aid, "student_id": student_id, "subject_id": subject_id, "date": date, "status": status})
         _write("attendance", attendance)
 
     def get_student_attendance(self, student_id):

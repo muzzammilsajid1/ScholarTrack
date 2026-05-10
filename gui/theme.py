@@ -13,10 +13,5 @@ THEME = {
     "COLOR_BG_DARK":   "#1e1e2e",
     "COLOR_BG_CARD":   "#2A2A3E",
     "COLOR_TEXT_MUTED":"#9CA3AF",
-    "CORNER_RADIUS": 12,
     "PADDING_LARGE":  30,
-    "PADDING_MEDIUM": 20,
-    "PADDING_SMALL":  10,
-    "BUTTON_WIDTH":  180,
-    "BUTTON_HEIGHT":  38,
 }

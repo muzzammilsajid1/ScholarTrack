@@ -1,7 +1,6 @@
 # Contains reusable UI widget factories to avoid duplicating layout boilerplate
 # Abstraction: hides complex frame stacking and alignment logic inside simple factory methods
 import tkinter as tk
-from tkinter import ttk
 from gui.theme import THEME
 
 

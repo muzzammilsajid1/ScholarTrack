@@ -2,10 +2,9 @@
 # Encapsulation: isolates UI layout and authentication logic within the LoginScreen class
 # Polymorphism: creates different view objects (AdminView, TeacherView, StudentView) based on user role
 import tkinter as tk
-from tkinter import ttk
 
 from gui.theme import THEME
-from storage.file_manager import FileManager
+
 from models.student import Student
 from models.teacher import Teacher
 from models.admin import Admin
@@ -187,10 +186,27 @@ class LoginScreen:
             for s in self.db.get_all_students():
                 # s = (student_id, name, username, semester, department)
                 if s[2] == username:
-                    model = Student(s[0], name, username, s[3], s[4])
+                    model = Student(user_id, s[0], name, username, s[3], s[4])
                     break
         elif role == "teacher":
             model = Teacher(user_id, name, username, "General")
+            # Populate teacher.subjects in the single canonical dict format
+            for subj_id, subj_name, subj_code in self.db.get_teacher_subjects(user_id):
+                enrolled = self.db.get_students_in_subject(subj_id)
+                scores = []
+                for s_id, *_ in enrolled:
+                    for g in self.db.get_student_grades(s_id):
+                        # g = (grade_id, subj_name, code, score, letter, semester)
+                        if g[2] == subj_code and g[3] is not None:
+                            scores.append(g[3])
+                average = round(sum(scores) / len(scores), 2) if scores else 0.0
+                model.subjects.append({
+                    "subject_id": subj_id,
+                    "name": subj_name,
+                    "code": subj_code,
+                    "students_count": len(enrolled),
+                    "average": average
+                })
         elif role == "admin":
             model = Admin(user_id, name, username, 3)
 
@@ -207,7 +223,7 @@ class LoginScreen:
             show_error(self.window, "Access Denied", "Your account lacks the necessary system permissions to proceed.")
             return
 
-        self.db.log_action(user_id, "LOGIN", username)
+
         self.window.destroy()
 
         view = None
