@@ -30,13 +30,6 @@ class LoginScreen:
         self.window.resizable(False, False)
         self.window.configure(bg=BG_DARK)
 
-        try:
-            self.window.iconbitmap("icon.ico")
-        except Exception:
-            pass
-
-        self.window.bind("<Return>", lambda e: self.attempt_login())
-
         self.build_ui()
 
     def build_ui(self):
